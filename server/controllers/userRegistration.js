@@ -27,13 +27,16 @@ async function registerUser()
         const newUser = await users.insertOne({
             name,
             email,
-            password,
+            password: await hashPassword(password),
             isVerified: false
         });
 
-
     } catch {
-        await dbClient.close()
+        await client.close()
     }
 }
 
+const hashPassword = async (password) => {
+    const salt = await bcrypt.genSalt(12);
+    return await bcrypt.hash(password, salt);
+}
