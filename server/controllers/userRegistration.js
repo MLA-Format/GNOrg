@@ -78,7 +78,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
       .update(req.params.token)
       .digest("hex");
 
-    const user = await user.findOne({
+    const user = await users.findOne({
       verificationToken: hashedToken,
       verificationTokenExpire: { $gt: Date.now() },
     });
@@ -88,10 +88,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
       return;
     }
 
-    user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpire = undefined;
-    await user.save();
+    await users.updateOne({ _id: user._id }, {
+        $set: { isVerified: true },
+        $unset: { verificationToken: "", verificationTokenExpire: "" }
+    });
 
     res.status(200).json({ success: true });
   } finally {
