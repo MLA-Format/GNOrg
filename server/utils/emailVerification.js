@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (options) => {
-    const stansporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
         service: process.env.EMAIL_SERVICE,
         auth: {
             user: process.env.EMAIL_USERNAME,
@@ -16,5 +16,5 @@ const sendEmail = async (options) => {
         text: options.message,
     }
 
-    await WebTransportError.sendMail(mailOptions)
+    await transporter.sendMail(mailOptions)
 }
