@@ -21,14 +21,14 @@ const registerUser = async (req, res) => {
 
     const userExists = await users.findOne({ username });
     if (userExists) {
-      res.status(400).json({ message: "Invalid or expired token." });
-      throw new Error("User already exists.");
+      res.status(400).json({ message: "USER_TAKEN" });
+      return;
     }
 
     const emailExists = await users.findOne({ email });
     if (emailExists) {
-      res.status(400).json({ message: "Invalid or expired token." });
-      throw new Error("Email already used.");
+      res.status(400).json({ message: "EMAIL_ASC." });
+      return;
     }
 
     const insertedUser = await users.insertOne({
