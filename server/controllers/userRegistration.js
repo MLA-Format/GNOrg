@@ -1,19 +1,21 @@
 const { MongoClient } = require("mongodb");
-const dbUrl = process.env.MONGODB_URL;
 const bcrypt = require("bcryptjs");
 const { getVerificationToken } = require("../models/user.js");
+const { sendEmail } = require("../utils/emailVerification.js");
+const client = new MongoClient(process.env.MONGODB_URL);
+const crypto = require("crypto");
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(12);
   return await bcrypt.hash(password, salt);
 };
 
-async function registerUser() {
+const registerUser = async (req, res) => {
   const { username, password, email } = req.body;
 
-  const client = new MongoClient(dbUrl);
 
   try {
+    await client.connect();
     const db = client.db("GNOrgDB");
     const users = db.collection("usr");
 
@@ -61,13 +63,13 @@ async function registerUser() {
 
       res.status(201).json({ success: true });
     }
-  } catch {
-    await client.close();
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: err.message });
   }
 }
 
-const verifyEmail = asyncHandler(async (req, res) => {
-  const client = new MongoClient(dbUrl);
+const verifyEmail = async (req, res) => {
 
   try {
     const db = client.db("GNOrgDB");
@@ -94,7 +96,10 @@ const verifyEmail = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json({ success: true });
-  } finally {
-    client.close();
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ message: err.message });
   }
-});
+}
+
+module.exports = { registerUser, verifyEmail };
