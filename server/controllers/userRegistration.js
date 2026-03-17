@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const { getVerificationToken } = require("../models/user.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const client = new MongoClient(process.env.MONGODB_URL);
-const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(12);
@@ -43,16 +43,6 @@ const registerUser = async (req, res) => {
     if (newUser) {
       const token = getVerificationToken(newUser);
 
-      await users.updateOne(
-        { _id: newUser._id },
-        {
-          $set: {
-            verificationToken: newUser.verificationToken,
-            verificationTokenExpire: newUser.verificationTokenExpire,
-          },
-        },
-      );
-
       const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
 
       await sendEmail({
@@ -72,33 +62,23 @@ const registerUser = async (req, res) => {
 const verifyEmail = async (req, res) => {
 
   try {
+
+    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
+
     const db = client.db("GNOrgDB");
     const users = db.collection("usr");
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
+    const { ObjectId } = require("mongodb");
 
-    const user = await users.findOne({
-      verificationToken: hashedToken,
-      verificationTokenExpire: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      res.status(400).json({ message: "Invalid or expired token." });
-      return;
-    }
-
-    await users.updateOne({ _id: user._id }, {
-        $set: { isVerified: true },
-        $unset: { verificationToken: "", verificationTokenExpire: "" }
-    });
+    await users.updateOne(
+      { _id: new ObjectId(decoded.id) },
+      { $set: { isVerified: true } }
+    );
 
     res.status(200).json({ success: true });
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: "Invalid or expired token." });
   }
 }
 
