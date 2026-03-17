@@ -51,7 +51,7 @@ async function registerUser() {
         },
       );
 
-      const verificationUrl = "";
+      const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
 
       await sendEmail({
         email: newUser.email,
