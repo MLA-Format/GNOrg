@@ -5,8 +5,10 @@ const app = express();
 app.use(express.json());
 
 const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
+const { login } = require("./controllers/userLogin.js");
 
 app.post("/register", registerUser);
 app.get("/register/verifyEmail/:token", verifyEmail);
+app.post("/login", login)
 
 app.listen(3000, () => console.log("Server running on port 3000"));
