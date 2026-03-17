@@ -3,6 +3,7 @@ const { getVerificationToken } = require("../models/user.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const client = new MongoClient(process.env.MONGODB_URL);
 const jwt = require("jsonwebtoken");
+const { hashPassword } = require("../utils/hashPassword.js");
 
 const registerUser = async (req, res) => {
   const { username, password, email } = req.body;
