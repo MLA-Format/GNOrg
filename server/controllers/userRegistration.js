@@ -1,14 +1,8 @@
 const { MongoClient } = require("mongodb");
-const bcrypt = require("bcryptjs");
 const { getVerificationToken } = require("../models/user.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const client = new MongoClient(process.env.MONGODB_URL);
 const jwt = require("jsonwebtoken");
-
-const hashPassword = async (password) => {
-  const salt = await bcrypt.genSalt(12);
-  return await bcrypt.hash(password, salt);
-};
 
 const registerUser = async (req, res) => {
   const { username, password, email } = req.body;
