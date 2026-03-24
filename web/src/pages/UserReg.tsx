@@ -26,7 +26,6 @@ export default function UserReg() {
                 return;
             }
 
-            // redirect to login on success
         } catch (err) {
             setError("Something went wrong, please try again");
         }
