@@ -17,6 +17,7 @@ const insertGame = async (game) => db().insertOne({
   },
   portable: game.portable ?? null,
   coverImage: game.coverImage || null,
+  userId: game.userId || null,  // <-- add this
 });
 
 module.exports = { connect, insertGame };
