@@ -9,10 +9,11 @@ app.use(cors());
 
 const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
 const { login } = require("./controllers/userLogin.js");
+const { newGame } = require("./controllers/newGame.js");
 
 app.post("/register", registerUser);
 app.get("/register/verifyEmail/:token", verifyEmail);
 app.post("/login", login);
-app.post("/games/create");
+app.post("/games/create", newGame);
 
 app.listen(3000, () => console.log("Server running on port 3000"));
