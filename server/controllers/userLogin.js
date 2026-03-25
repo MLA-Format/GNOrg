@@ -1,24 +1,32 @@
-const { MongoClient } = require("mongodb");
-const client = new MongoClient(process.env.MONGODB_URL);
+// Imports.
 const bcrypt = require("bcryptjs");
+const { connect, checkUserExistence } = require("../db/usr.js");
+const jwt = require("jsonwebtoken");
 
+// Function to log a user in.
 const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    await client.connect();
+    await connect();
+    const user = await checkUserExistence(username);
 
-    const db = client.db("GNOrgDB");
-    const users = db.collection("usr");
+    if (!user || !await bcrypt.compare(password, user.password)) {
+      return res.status(401).json({ message: "LOGIN_INVALID" });
+    }
 
-    const user = await users.findOne({username})
-    if (!user || !await bcrypt.compare(password, user.password))
-      return res.status(401).json({message: "LOGIN_INVALID"});
-    res.status(200).json();
+    // Create JWT
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
+
+    res.status(200).json({ token });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 module.exports = { login };
