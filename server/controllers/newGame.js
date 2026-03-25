@@ -1,11 +1,11 @@
 // Imports.
 const { insertGame } = require("../db/games.js");
 
-// Create a new game.
+// Function to create a new game.
 const newGame = async (req, res) => {
     try {
         const { name, players, genre, portable, coverImage } = req.body;
-        const userId = req.user?.id; // comes from JWT middleware
+        const userId = req.user?.id;
 
         if (!name) {
             return res.status(400).json({ error: "Name is required." });
