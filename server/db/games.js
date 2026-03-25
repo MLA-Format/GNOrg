@@ -1,9 +1,13 @@
+// Imports
 const { MongoClient } = require("mongodb");
+
+// DB Connection Setup
 const client = new MongoClient(process.env.MONGODB_URL);
 const db = () => client.db("GNOrgDB").collection("games");
 
 const connect = async () => await client.connect();
 
+// Function to insert a game into the games collection.
 const insertGame = async (game) => db().insertOne({
   name: game.name,
   players: game.players || null,

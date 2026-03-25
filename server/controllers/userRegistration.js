@@ -1,9 +1,11 @@
+// Imports.
 const { getVerificationToken } = require("../utils/jwtToken.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const { hashPassword } = require("../utils/hashPassword.js");
 const { connect, checkUserExistence, checkEmailExistence, insertUser, findUserById, setUserVerified } = require("../db/usr.js");
-const jwt = require("jsonwebtoken");
+const { jwt } = require("jsonwebtoken");
 
+// Function to handle initially registering a user before they are verified.
 const registerUser = async (req, res) => {
   const { username, password, email } = req.body;
 
@@ -43,6 +45,7 @@ const registerUser = async (req, res) => {
   }
 }
 
+// Function to handle verifying a user when they go to the url they are sent.
 const verifyEmail = async (req, res) => {
   try {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);

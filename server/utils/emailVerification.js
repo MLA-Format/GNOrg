@@ -1,5 +1,7 @@
+// Imports.
 const nodemailer = require("nodemailer");
 
+// Function to send a verification email to a user using nodemailer.
 const sendEmail = async (options) => {
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,

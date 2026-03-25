@@ -1,5 +1,7 @@
+// Imports.
 const jwt = require("jsonwebtoken");
 
+// Function to create a verification token.
 const getVerificationToken = (user) => {
     return jwt.sign(
         { id: user._id },
