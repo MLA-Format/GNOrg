@@ -26,4 +26,4 @@ const deleteGame = async (game) => db().deleteOne({
   userId: game.userId,
 });
 
-module.exports = { connect, insertGame };
+module.exports = { connect, insertGame, deleteGame };
