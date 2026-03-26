@@ -12,7 +12,7 @@ const newGame = async (req, res) => {
         }
 
         if (!userId) {
-            return res.status(401).json({ error: "Unauthorized." });
+            return res.sendStatus(401);
         }
 
         const result = await insertGame({
@@ -27,7 +27,7 @@ const newGame = async (req, res) => {
         res.status(201).json({ id: result.insertedId });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Server error." });
+        res.sendStatus(500);
     }
 };
 

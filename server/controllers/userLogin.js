@@ -12,7 +12,7 @@ const login = async (req, res) => {
     const user = await checkUserExistence(username);
 
     if (!user || !await bcrypt.compare(password, user.password)) {
-      return res.status(401).json({ message: "LOGIN_INVALID" });
+      return res.sendStatus(401);
     }
 
     // Create JWT
@@ -25,7 +25,7 @@ const login = async (req, res) => {
     res.status(200).json({ token });
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    res.sendStatus(500);
   }
 };
 

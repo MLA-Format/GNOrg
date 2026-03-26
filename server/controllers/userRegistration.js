@@ -37,11 +37,11 @@ const registerUser = async (req, res) => {
         subject: "Email Verification",
         message: `Please verify your email by clicking the following link: ${verificationUrl}`,
       });
-      res.status(201).json({ success: true });
+      res.sendStatus(201);
     }
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ message: err.message });
+    res.sendStatus(500);
   }
 }
 
@@ -51,7 +51,7 @@ const verifyEmail = async (req, res) => {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     await connect();
     await setUserVerified(decoded.id);
-    res.status(200).json({ success: true });
+    res.sendStatus(200);
   } catch (err) {
     console.error("Verification error:", err);
     res.status(400).json({ message: "Invalid or expired token." });
