@@ -77,4 +77,4 @@ const getGames = async (game) => db().find((() => {
   return query;
 })()).toArray();
 
-module.exports = { connect, insertGame, deleteGame, editGame };
+module.exports = { connect, insertGame, deleteGame, editGame, getGames };

@@ -23,7 +23,7 @@ app.post("/login", login);
 app.post("/games/create", requireAuth, newGame);
 app.delete("/games/delete", requireAuth, delGame);
 app.patch("/games/edit", requireAuth, modGame);
-app.get("/games/get", requireAuth, fetchGames);
+app.post("/games/get", requireAuth, fetchGames);
 
 // Initializing app.
 app.listen(3000, () => console.log("Server running on port 3000"));
