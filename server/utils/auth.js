@@ -1,6 +1,7 @@
 // Imports.
 const jwt = require("jsonwebtoken");
 
+// Function to check for authorization header and set the JWT for the request.
 const requireAuth = (req, res, next) => {
     const authHeader = req.headers.authorization;
 

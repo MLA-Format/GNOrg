@@ -8,11 +8,11 @@ const newGame = async (req, res) => {
         const userId = req.user?.id;
 
         if (!name) {
-            return res.status(400).json({ error: "Name is required." });
+            return res.status(400).json({ error: "NAME_REQ" });
         }
 
         if (!userId) {
-            return res.status(401).json({ error: "Unauthorized." });
+            return res.sendStatus(401);
         }
 
         const result = await insertGame({
@@ -27,7 +27,7 @@ const newGame = async (req, res) => {
         res.status(201).json({ id: result.insertedId });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Server error." });
+        res.sendStatus(500);
     }
 };
 

@@ -8,11 +8,11 @@ const delGame = async (req, res) => {
         const userId = req.user?.id;
 
         if (!name) {
-            return res.status(400).json({ error: "Name is required." });
+            return res.status(400).json({ error: "NAME_REQ" });
         }
 
         if (!userId) {
-            return res.status(401).json({ error: "Unauthorized." });
+            return res.sendStatus(401);
         }
 
         const result = await deleteGame({
@@ -21,13 +21,13 @@ const delGame = async (req, res) => {
         });
 
         if (result.deletedCount === 0) {
-            return res.status(404).json({ error: "Game not found." });
+            return res.sendStatus(404);
         }
 
-        res.status(200).json({ message: "Game deleted." });
+        res.sendStatus(200);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Server error." });
+        res.sendStatus(500);
     }
 };
 
