@@ -10,6 +10,7 @@ app.use(cors());
 // API function imports.
 const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
 const { login } = require("./controllers/userLogin.js");
+const { logoff } = require("./controllers/userLogoff.js");
 const { newGame } = require("./controllers/newGame.js");
 const { delGame } = require("./controllers/delGame.js");
 const { modGame } = require("./controllers/editGame.js");
