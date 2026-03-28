@@ -1,14 +1,19 @@
 // Imports
 const { editGame } = require("../db/games.js");
+const { ObjectId } = require("mongodb");
 
 // Function to edit a game.
 const modGame = async (req, res) => {
     try {
-        const { name, players, genre, portable, coverImage } = req.body;
+        const { id, name, players, genre, portable, coverImage } = req.body;
         const userId = req.user?.id;
 
-        if (!name) {
-            return res.status(400).json({ error: "NAME_REQ" });
+        if (!id) {
+            return res.status(400).json({ error: "ID_REQ" });
+        }
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "ID_INVALID" });
         }
 
         if (!userId) {
@@ -16,6 +21,7 @@ const modGame = async (req, res) => {
         }
 
         const result = await editGame({
+            id,
             name,
             players,
             genre,

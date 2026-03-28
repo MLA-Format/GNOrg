@@ -1,5 +1,5 @@
 // Imports
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 
 // DB Connection Setup
 const client = new MongoClient(process.env.MONGODB_URL);
@@ -28,10 +28,10 @@ const deleteGame = async (game) => db().deleteOne({
 
 // Function to update a game in a users game collection.
 const editGame = async (game) => db().updateOne(
-  { name: game.name, userId: game.userId },
+  { _id: new ObjectId(game.id), userId: game.userId },
   {
     $set: {
-      name: game.name,
+      name: game.name || null,
       players: game.players || null,
       genre: {
         category: game.genre?.category || null,
@@ -39,9 +39,8 @@ const editGame = async (game) => db().updateOne(
       },
       portable: game.portable ?? null,
       coverImage: game.coverImage || null,
-      userId: game.userId || null
     }
   }
 );
 
-module.exports = { connect, insertGame, deleteGame };
+module.exports = { connect, insertGame, deleteGame, editGame };
