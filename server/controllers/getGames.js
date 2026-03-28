@@ -2,7 +2,7 @@
 const { getGames } = require("../db/games.js");
 const { ObjectId } = require("mongodb");
 
-// Function to get games.
+// Function to get games based on users entered parameters.
 const fetchGames = async (req, res) => {
     try {
         const { id, name, players, genre, portable, coverImage } = req.query;
