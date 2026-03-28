@@ -43,4 +43,38 @@ const editGame = async (game) => db().updateOne(
   }
 );
 
+// Function to get games that meet the requirements the user
+// provides. Uses partial search for name searches, and matches
+// all other parameters provided.
+const getGames = async (game) => db().find((() => {
+  
+  const query = { userId: game.userId };
+
+  if (game.name) {
+    query.name = { $regex: game.name, $options: "i" };
+  }
+
+  if (game.players) {
+    query.players = game.players;
+  }
+  
+  if (game.genre?.category) {
+    query["genre.category"] = game.genre.category;
+  }
+  
+  if (game.genre?.type) {
+    query["genre.type"] = game.genre.type;
+  }
+  
+  if (game.portable != null) {
+    query.portable = game.portable;
+  }
+  
+  if (game.coverImage) {
+    query.coverImage = game.coverImage;
+  }
+
+  return query;
+})()).toArray();
+
 module.exports = { connect, insertGame, deleteGame, editGame };
