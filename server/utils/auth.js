@@ -1,5 +1,6 @@
 // Imports.
 const jwt = require("jsonwebtoken");
+const { tokenDenylist } = require("../controllers/userLogoff");
 
 // Function to check for authorization header and set the JWT for the request.
 const requireAuth = (req, res, next) => {
@@ -19,7 +20,7 @@ const requireAuth = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // Settubg req.user.id inside request.
+        req.user = decoded; // Setting req.user.id inside request.
         next();
     } catch (err) {
         return res.status(401).json({ error: "Unauthorized." });

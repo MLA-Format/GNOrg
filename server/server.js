@@ -22,7 +22,7 @@ app.get("/register/verifyEmail/:token", verifyEmail);
 app.post("/login", login);
 app.post("/games/create", requireAuth, newGame);
 app.delete("/games/delete", requireAuth, delGame);
-app.post("/games/edit", requireAuth, modGame);
+app.get("/logoff", logoff);
 
 // Initializing app.
 app.listen(3000, () => console.log("Server running on port 3000"));
