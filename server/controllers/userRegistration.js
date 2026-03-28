@@ -18,7 +18,7 @@ const registerUser = async (req, res) => {
 
     const emailExists = await checkEmailExistence(email);
     if (emailExists)
-      return res.status(400).json({ message: "EMAIL_ASC." });
+      return res.status(400).json({ message: "EMAIL_TAKEN" });
 
     const insertedUser = await insertUser({
       username,
