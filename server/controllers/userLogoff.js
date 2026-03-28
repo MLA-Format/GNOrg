@@ -1,7 +1,7 @@
 // Imports.
 const jwt = require("jsonwebtoken");
 
-// Setting deny list for reference 
+// Initializing deny list. 
 const tokenDenylist = new Set();
 
 // Function to handle logging a user out. It adds the JWT to the tokenDenyList, which
