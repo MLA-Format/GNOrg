@@ -14,6 +14,7 @@ const { logoff } = require("./controllers/userLogoff.js");
 const { newGame } = require("./controllers/newGame.js");
 const { delGame } = require("./controllers/delGame.js");
 const { modGame } = require("./controllers/editGame.js");
+const { fetchGames } = require("./controllers/getGames.js");
 const { requireAuth } = require("./utils/auth.js");
 
 // Registering paths for API.
@@ -22,6 +23,8 @@ app.get("/register/verifyEmail/:token", verifyEmail);
 app.post("/login", login);
 app.post("/games/create", requireAuth, newGame);
 app.delete("/games/delete", requireAuth, delGame);
+app.patch("/games/edit", requireAuth, modGame);
+app.post("/games/get", requireAuth, fetchGames);
 app.get("/logoff", logoff);
 
 // Initializing app.
