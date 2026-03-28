@@ -26,7 +26,7 @@ const deleteGame = async (game) => db().deleteOne({
   userId: game.userId,
 });
 
-// Function to update a game in a users game collection.
+// Function to update a game in a user's game collection.
 const editGame = async (game) => db().updateOne(
   { _id: new ObjectId(game.id), userId: game.userId },
   {
