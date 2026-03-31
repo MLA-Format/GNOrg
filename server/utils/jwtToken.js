@@ -10,4 +10,13 @@ const getVerificationToken = (user) => {
     );
 }
 
+// Function to create a password reset verification token.
+const getPwdRstToken = (user) => {
+    return jwt.sign(
+        { id: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: "30m" }
+    );
+}
+
 module.exports = { getVerificationToken };

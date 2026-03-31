@@ -25,4 +25,8 @@ const setUserVerified = async (id) => db().updateOne(
     { $set: { isVerified: true } }
 );
 
+// Function to store the JWT for the password reset.
+
+
+
 module.exports = { connect, checkUserExistence, checkEmailExistence, findUserById, insertUser, setUserVerified };
