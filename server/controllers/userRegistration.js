@@ -58,4 +58,59 @@ const verifyEmail = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, verifyEmail };
+
+// Function 
+const requestPasswordReset = async (req, res) => {
+  try {
+    await connect();
+    const email = await checkEmailExistence(req.body.email);
+
+    // Check user does not exist.
+    if (!user)
+      return res.status(400).json({ message: "EMAIL_NOT_FOUND" });
+
+    const token = getShortLivedToken(user);
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset",
+      message: `Reset your password (expires in 30 minutes): ${resetUrl}`,
+    });
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Password reset request error:", err);
+    res.sendStatus(500);
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    // Check if token is present in deny list.
+    if (tokenDenylist.has(req.params.token))
+      return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
+
+    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    await connect();
+    await updateUserPassword(decoded.id, await hashPassword(req.body.password));
+    
+    // Add token to deny list.
+    tokenDenylist.add(req.params.token);
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Password reset error:", err);
+
+    // Check if error is due to token expiring.
+    if (err.name === "TokenExpiredError")
+      return res.status(400).json({ message: "RESET_TOKEN_EXPIRED" });
+    
+    // Check if error is due to token creation.
+    if (err.name === "JsonWebTokenError")
+      return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
+
+    res.sendStatus(500);
+  }
+};
+
+module.exports = { registerUser, verifyEmail, requestPasswordReset, resetPassword };
