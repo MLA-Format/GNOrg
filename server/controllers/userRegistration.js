@@ -1,9 +1,9 @@
+// Imports.
 const jwt = require("jsonwebtoken");
-const { getVerificationToken, getPwdRstToken } = require("../utils/jwtToken.js");
+const { getVerificationToken } = require("../utils/jwtToken.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const { hashPassword } = require("../utils/hashPassword.js");
-const { connect, checkUserExistence, checkEmailExistence, insertUser, findUserById, setUserVerified, updateUserPwd } = require("../db/usr.js");
-const { tokenDenylist, activeResetTokens } = require("../utils/auth.js");
+const { connect, checkUserExistence, checkEmailExistence, insertUser, findUserById, setUserVerified } = require("../db/usr.js");
 
 // Function to handle initially registering a user before they are verified.
 const registerUser = async (req, res) => {
@@ -51,76 +51,14 @@ const verifyEmail = async (req, res) => {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     await connect();
     await setUserVerified(decoded.id);
-    res.sendStatus(200);
+
+    // Issue a new auth token so the frontend can auto-login after verification.
+    const authToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: "30m" });
+    res.status(200).json({ token: authToken });
   } catch (err) {
     console.error("Verification error:", err);
     res.status(400).json({ message: "Invalid or expired token." });
   }
 };
 
-// Function to handle requesting a password reset email.
-const requestPasswordReset = async (req, res) => {
-  try {
-    await connect();
-    const user = await checkEmailExistence(req.body.email);
-
-    // Check user does not exist.
-    if (!user)
-      return res.status(400).json({ message: "EMAIL_NOT_FOUND" });
-
-    // Check if a reset token is already active for this user.
-    if (activeResetTokens.has(user._id.toString()))
-      return res.status(400).json({ message: "RESET_ALREADY_SENT" });
-
-    const token = getPwdRstToken(user);
-    activeResetTokens.add(user._id.toString());
-
-    // Auto-remove from active reset tokens after 30 minutes if unused.
-    setTimeout(() => activeResetTokens.delete(user._id.toString()), 30 * 60 * 1000);
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-    await sendEmail({
-      email: user.email,
-      subject: "Password Reset",
-      message: `Reset your password (expires in 30 minutes): ${resetUrl}`,
-    });
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("Password reset request error:", err);
-    res.sendStatus(500);
-  }
-};
-
-// Function to handle resetting the password once the user visits the reset URL.
-const resetPassword = async (req, res) => {
-  try {
-    // Check if token is present in deny list.
-    if (tokenDenylist.has(req.params.token))
-      return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
-
-    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
-    await connect();
-    await updateUserPwd(decoded.id, await hashPassword(req.body.password));
-
-    // Add token to deny list and clear active reset token.
-    tokenDenylist.add(req.params.token);
-    activeResetTokens.delete(decoded.id);
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("Password reset error:", err);
-
-    // Check if error is due to token expiring.
-    if (err.name === "TokenExpiredError")
-      return res.status(400).json({ message: "RESET_TOKEN_EXPIRED" });
-
-    // Check if error is due to token creation.
-    if (err.name === "JsonWebTokenError")
-      return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
-
-    res.sendStatus(500);
-  }
-};
-
-module.exports = { registerUser, verifyEmail, requestPasswordReset, resetPassword };
+module.exports = { registerUser, verifyEmail };

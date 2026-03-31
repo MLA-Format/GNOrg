@@ -8,7 +8,8 @@ const cors = require("cors");
 app.use(cors());
 
 // API function imports.
-const { registerUser, verifyEmail, requestPasswordReset, resetPassword } = require("./controllers/userRegistration.js");
+const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
+const { requestPasswordReset, resetPassword } = require("./controllers/userPwdRst.js");
 const { login } = require("./controllers/userLogin.js");
 const { logoff } = require("./controllers/userLogoff.js");
 const { newGame } = require("./controllers/newGame.js");

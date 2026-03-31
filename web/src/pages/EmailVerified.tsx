@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 type Status = "loading" | "success" | "error";
@@ -7,16 +7,26 @@ export default function VerifyEmail() {
 
     // Setting use states and other const vars.
     const { token } = useParams();
+    const navigate = useNavigate();
     const [status, setStatus] = useState<Status>("loading");
     const [countdown, setCountdown] = useState(5);
 
+    // Call verify email api on mount.
     useEffect(() => {
         const verify = async () => {
             try {
                 const response = await fetch(`http://localhost:3000/verify-email/${token}`, {
                     method: "GET"
                 });
-                setStatus(response.ok ? "success" : "error");
+
+                if (response.ok) {
+                    // Store auth token so login page auto-redirects to dashboard.
+                    const data = await response.json();
+                    localStorage.setItem("token", data.token);
+                    setStatus("success");
+                } else {
+                    setStatus("error");
+                }
             } catch {
                 setStatus("error");
             }
@@ -24,12 +34,13 @@ export default function VerifyEmail() {
         verify();
     }, [token]);
 
+    // Redirect to login on success, which will auto-redirect to dashboard.
     useEffect(() => {
         if (status !== "success") return;
-        if (countdown === 0) return;
+        if (countdown === 0) { navigate("/login"); return; }
         const t = setTimeout(() => setCountdown(c => c - 1), 1000);
         return () => clearTimeout(t);
-    }, [status, countdown]);
+    }, [status, countdown, navigate]);
 
     return (
         <div
@@ -82,7 +93,7 @@ export default function VerifyEmail() {
                                 <circle cx="7" cy="7" r="6" stroke="#e8f56e" strokeWidth="1.5"/>
                                 <path d="M4.5 7l2 2 3-3" stroke="#e8f56e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            <p className="text-[#e8f56e] text-xs">Email verified! Redirecting to login in {countdown}s...</p>
+                            <p className="text-[#e8f56e] text-xs">Email verified! Redirecting to dashboard in {countdown}s...</p>
                         </div>
                     )}
 
