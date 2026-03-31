@@ -1,28 +1,50 @@
 import NewLineEntry from '../components/NewLineEntry.tsx'
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Login() {
 
+    // Setting use states and const vars.
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
+    // If a valid token is already stored, skip login.
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            const { exp } = JSON.parse(atob(token.split(".")[1]));
+            if (exp * 1000 > Date.now()) navigate("/dashboard");
+            else localStorage.removeItem("token");
+        } catch {
+            localStorage.removeItem("token");
+        }
+    }, [navigate]);
+
+    // Handle submitting login.
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Call login api.
             const response = await fetch("http://localhost:3000/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })
             });
 
+            // Check login api response.
             if (!response.ok) {
                 const data = await response.json();
                 setError(data.message);
                 return;
             }
+
+            // Store token and redirect user to dashboard.
+            const data = await response.json();
+            localStorage.setItem("token", data.token);
             navigate("/dashboard");
         } catch {
             setError("Login failed due to internal error. Please try again later.")
@@ -58,21 +80,16 @@ export default function Login() {
                 style={{ border: '1px solid rgba(255,255,255,0.1)' }}
             >
                 <div className="p-14 flex flex-col gap-6">
-                    {/* Logo placeholder */}
                     <div className="w-10 h-10 rounded-md bg-[#2a2d3e] border border-[#ffffff20]" />
 
-                    {/* Header */}
                     <div className="flex flex-col gap-1">
                         <h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
                         <p className="text-sm text-gray-300">Sign in to continue to your account</p>
                     </div>
 
-                    {/* Fields */}
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-semibold text-gray-300 uppercase tracking-widest">
-                                Username
-                            </label>
+                            <label className="text-xs font-semibold text-gray-300 uppercase tracking-widest">Username</label>
                             <NewLineEntry
                                 title="username"
                                 placeholder="your_username"
@@ -84,12 +101,10 @@ export default function Login() {
 
                         <div className="flex flex-col gap-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-gray-300 uppercase tracking-widest">
-                                    Password
-                                </label>
-                                <span className="text-xs text-[#e8f56e] hover:text-[#f0f8a0] cursor-pointer transition-colors">
+                                <label className="text-xs font-semibold text-gray-300 uppercase tracking-widest">Password</label>
+                                <Link to="/reset-login" className="text-xs text-[#e8f56e] hover:text-[#f0f8a0] transition-colors">
                                     Forgot password?
-                                </span>
+                                </Link>
                             </div>
                             <NewLineEntry
                                 title="password"
@@ -102,7 +117,6 @@ export default function Login() {
                         </div>
                     </div>
 
-                    {/* Error */}
                     {error && (
                         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
@@ -113,7 +127,6 @@ export default function Login() {
                         </div>
                     )}
 
-                    {/* Submit */}
                     <button
                         type="submit"
                         className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] active:bg-[#d4e050] transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide shadow-lg"
@@ -121,7 +134,6 @@ export default function Login() {
                         Sign in
                     </button>
 
-                    {/* Footer */}
                     <p className="text-center text-xs text-gray-300">
                         Don't have an account?{' '}
                         <Link to="/register" className="text-[#e8f56e] hover:text-[#f0f8a0] transition-colors font-medium">

@@ -19,4 +19,4 @@ const getPwdRstToken = (user) => {
     );
 }
 
-module.exports = { getVerificationToken };
+module.exports = { getVerificationToken, getPwdRstToken };

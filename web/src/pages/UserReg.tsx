@@ -4,34 +4,40 @@ import { useState, useEffect } from 'react'
 
 export default function UserReg() {
 
+    // Setting use states.
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password1, setPassword1] = useState("");
     const [password2, setPassword2] = useState("");
     const [error, setError] = useState("");
 
+    // Handle submitting registration.
     const handleSubmit = async () => {
         if (error) return;
         try {
+            // Call user registration api.
             const response = await fetch("http://localhost:3000/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, username, password: password1 })
             });
 
+            // Check user registration api response.
             if (!response.ok) {
                 const data = await response.json();
                 setError(data.message);
                 return;
             }
-
         } catch (err) {
             setError("Something went wrong, please try again");
         }
     }
 
+    // Check email is a valid email format using regex and that both entered
+    // passwords match.
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (email && !emailRegex.test(email)) {
             setError("Please enter a valid email");
             return;

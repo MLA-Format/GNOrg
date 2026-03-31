@@ -8,7 +8,7 @@ const cors = require("cors");
 app.use(cors());
 
 // API function imports.
-const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
+const { registerUser, verifyEmail, requestPasswordReset, resetPassword } = require("./controllers/userRegistration.js");
 const { login } = require("./controllers/userLogin.js");
 const { logoff } = require("./controllers/userLogoff.js");
 const { newGame } = require("./controllers/newGame.js");
@@ -26,6 +26,8 @@ app.delete("/games/delete", requireAuth, delGame);
 app.patch("/games/edit", requireAuth, modGame);
 app.post("/games/get", requireAuth, fetchGames);
 app.get("/logoff", logoff);
+app.post("/request-password-reset", requestPasswordReset);
+app.post("/reset-password/:token", resetPassword);
 
 // Initializing app.
 app.listen(3000, () => console.log("Server running on port 3000"));
