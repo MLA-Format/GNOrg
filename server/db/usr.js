@@ -32,4 +32,4 @@ const updateUserPwd = async (id, hashedPassword) => db().updateOne(
 )
 
 
-module.exports = { connect, checkUserExistence, checkEmailExistence, findUserById, insertUser, setUserVerified };
+module.exports = { connect, checkUserExistence, checkEmailExistence, findUserById, insertUser, setUserVerified, updateUserPwd };
