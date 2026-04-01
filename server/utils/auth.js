@@ -1,6 +1,11 @@
 // Imports.
 const jwt = require("jsonwebtoken");
-const { tokenDenylist } = require("../controllers/userLogoff");
+
+// Denylist for invalidated tokens.
+const tokenDenylist = new Set();
+
+// Active reset tokens tracker.
+const activeResetTokens = new Set();
 
 // Function to check for authorization header and set the JWT for the request.
 const requireAuth = (req, res, next) => {
@@ -27,4 +32,4 @@ const requireAuth = (req, res, next) => {
     }
 };
 
-module.exports = { requireAuth };
+module.exports = { requireAuth, tokenDenylist, activeResetTokens };

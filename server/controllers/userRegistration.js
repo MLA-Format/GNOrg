@@ -1,9 +1,9 @@
 // Imports.
+const jwt = require("jsonwebtoken");
 const { getVerificationToken } = require("../utils/jwtToken.js");
 const { sendEmail } = require("../utils/emailVerification.js");
 const { hashPassword } = require("../utils/hashPassword.js");
 const { connect, checkUserExistence, checkEmailExistence, insertUser, findUserById, setUserVerified } = require("../db/usr.js");
-const { jwt } = require("jsonwebtoken");
 
 // Function to handle initially registering a user before they are verified.
 const registerUser = async (req, res) => {
@@ -43,7 +43,7 @@ const registerUser = async (req, res) => {
     console.error("Registration error:", err);
     res.sendStatus(500);
   }
-}
+};
 
 // Function to handle verifying a user when they go to the url they are sent.
 const verifyEmail = async (req, res) => {
@@ -51,11 +51,14 @@ const verifyEmail = async (req, res) => {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     await connect();
     await setUserVerified(decoded.id);
-    res.sendStatus(200);
+
+    // Issue a new auth token so the frontend can auto-login after verification.
+    const authToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: "30m" });
+    res.status(200).json({ token: authToken });
   } catch (err) {
     console.error("Verification error:", err);
     res.status(400).json({ message: "Invalid or expired token." });
   }
-}
+};
 
 module.exports = { registerUser, verifyEmail };

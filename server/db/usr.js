@@ -25,4 +25,11 @@ const setUserVerified = async (id) => db().updateOne(
     { $set: { isVerified: true } }
 );
 
-module.exports = { connect, checkUserExistence, checkEmailExistence, findUserById, insertUser, setUserVerified };
+// Function to update a user's password.
+const updateUserPwd = async (id, hashedPassword) => db().updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { password: hashedPassword } }
+)
+
+
+module.exports = { connect, checkUserExistence, checkEmailExistence, findUserById, insertUser, setUserVerified, updateUserPwd };

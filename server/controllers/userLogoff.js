@@ -1,8 +1,6 @@
 // Imports.
 const jwt = require("jsonwebtoken");
-
-// Initializing deny list. 
-const tokenDenylist = new Set();
+const { tokenDenylist } = require("../utils/auth.js");
 
 // Function to handle logging a user out. It adds the JWT to the tokenDenyList, which
 // is used to determine if a token is logged out or not.
@@ -23,4 +21,4 @@ const logoff = async (req, res) => {
     }
 };
 
-module.exports = { logoff, tokenDenylist };
+module.exports = { logoff };
