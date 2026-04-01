@@ -38,8 +38,6 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-white landing">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
-                .landing * { font-family: 'JetBrains Mono', monospace; }
                 .landing .hero-title { font-size: 3.5rem; line-height: 1.1; font-weight: 700; }
                 .landing .container { max-width: 1400px; margin: 0 auto; padding: 0 8rem; }
                 .landing .fade-in { animation: fadeUp 0.6s ease both; }
