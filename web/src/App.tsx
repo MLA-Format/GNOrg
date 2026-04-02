@@ -4,6 +4,8 @@ import UserReg from './pages/UserReg.tsx'
 import ResetLogin from './pages/RequestReset.tsx'
 import ResetPassword from './pages/ResetPassword.tsx'
 import VerifyEmail from './pages/EmailVerified.tsx'
+import Dashboard from './pages/UserDash.tsx'
+import LandingPage from './pages/Landing.tsx'
 
 export default function App() {
     return (
@@ -14,6 +16,8 @@ export default function App() {
                 <Route path="/reset-login" element={<ResetLogin />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/verify-email/:token" element={<VerifyEmail />} />
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
         </BrowserRouter>
     );
