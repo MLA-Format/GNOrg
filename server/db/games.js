@@ -7,10 +7,20 @@ const db = () => client.db("GNOrgDB").collection("games");
 
 const connect = async () => await client.connect();
 
+// Normalise the players field into { min, max, exact } — all keys optional.
+const normalisePlayers = (players) => {
+    if (!players) return null;
+    const result = {};
+    if (players.min != null)                              result.min   = players.min;
+    if (players.max != null)                              result.max   = players.max;
+    if (Array.isArray(players.exact) && players.exact.length) result.exact = players.exact;
+    return Object.keys(result).length ? result : null;
+};
+
 // Function to insert a game into a user's games collection.
 const insertGame = async (game) => db().insertOne({
   name: game.name,
-  players: game.players || null,
+  players: normalisePlayers(game.players),
   genre: {
     category: game.genre?.category || null,
     type: game.genre?.type || null,
@@ -32,7 +42,7 @@ const editGame = async (game) => db().updateOne(
   {
     $set: {
       name: game.name || null,
-      players: game.players || null,
+      players: normalisePlayers(game.players),
       genre: {
         category: game.genre?.category || null,
         type: game.genre?.type || null,
@@ -54,8 +64,12 @@ const getGames = async (game) => db().find((() => {
     query.name = { $regex: game.name, $options: "i" };
   }
 
-  if (game.players) {
-    query.players = game.players;
+  if (game.players?.count != null) {
+    const count = Number(game.players.count);
+    query.$or = [
+      { $and: [{ "players.min": { $lte: count } }, { "players.max": { $gte: count } }] },
+      { "players.exact": count },
+    ];
   }
   
   if (game.genre?.category) {
