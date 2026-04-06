@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL for the GNOrg backend.
-const String _baseUrl = 'http://100.69.2.138:3000';
+const String _baseUrl = 'http://143.198.2.194/api';
 
 class AuthService {
   /// Registers a new user. Returns null on success, or an error message string.
