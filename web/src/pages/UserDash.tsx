@@ -37,7 +37,6 @@ const API = 'http://localhost:3000';
 
 const EMPTY_FILTERS: Filters = { playerCount: '', genreCategory: '', portable: '' };
 
-// The same diagonal gradient used across all auth pages.
 const AUTH_GRADIENT = `linear-gradient(
     120deg,
     #e8f56e 0%,
@@ -58,16 +57,13 @@ const AUTH_GRADIENT = `linear-gradient(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Retrieve the JWT from localStorage. */
 const getToken = () => localStorage.getItem('token');
 
-/** Shared auth headers for all API calls. */
 const authHeaders = () => ({
     'Content-Type': 'application/json',
     Authorization: `Bearer ${getToken()}`,
 });
 
-/** Format a Players object into a human-readable string for the game card. */
 const formatPlayers = (players: Players | null): string | null => {
     if (!players) return null;
     const parts: string[] = [];
@@ -84,7 +80,6 @@ const formatPlayers = (players: Players | null): string | null => {
 
 // ─── Panel content types ──────────────────────────────────────────────────────
 
-// Tracks what is currently shown in the right panel / mobile modal.
 type PanelView =
     | { type: 'none' }
     | { type: 'action'; game: Game }
@@ -94,7 +89,6 @@ type PanelView =
 
 // ─── Field ────────────────────────────────────────────────────────────────────
 
-/** Labelled text/select input styled for the dark right panel. */
 function Field({
     label,
     type = 'text',
@@ -142,7 +136,6 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
 
     return (
         <div className="bg-white/70 backdrop-blur-sm border border-[#0a0f2e15] rounded-2xl overflow-hidden flex flex-col group hover:border-[#0a0f2e40] transition-all duration-200 shadow-sm">
-            {/* Cover image or placeholder */}
             <div className="relative w-full aspect-[3/2] bg-[#e8f56e30] flex items-center justify-center overflow-hidden">
                 {game.coverImage ? (
                     <img
@@ -151,7 +144,6 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                 ) : (
-                    /* Placeholder board-game grid pattern */
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.2">
                         <rect x="4" y="4" width="40" height="40" rx="4" stroke="#0a0f2e" strokeWidth="2" />
                         <line x1="4" y1="17" x2="44" y2="17" stroke="#0a0f2e" strokeWidth="1.5" />
@@ -161,7 +153,6 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
                     </svg>
                 )}
 
-                {/* ⋯ action button */}
                 <button
                     onClick={() => onAction(game)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-[#0a0f2e]/80 backdrop-blur-sm border border-[#ffffff20] flex items-center justify-center text-white hover:bg-[#e8f56e] hover:text-[#0a0f2e] transition-all"
@@ -175,12 +166,10 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
                 </button>
             </div>
 
-            {/* Card body */}
             <div className="p-4 flex flex-col gap-2 flex-1">
                 <h3 className="text-sm font-bold text-[#0a0f2e] leading-tight">{game.name}</h3>
 
                 <div className="flex flex-wrap gap-2 mt-auto pt-2">
-                    {/* Player count badge */}
                     {playerLabel && (
                         <span className="flex items-center gap-1 text-xs font-medium bg-[#0a0f2e10] border border-[#0a0f2e15] rounded-md px-2 py-1 text-[#0a0f2e]">
                             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -191,7 +180,6 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
                         </span>
                     )}
 
-                    {/* Portable badge */}
                     {game.portable != null && (
                         <span className={`text-xs font-medium rounded-md px-2 py-1 border ${
                             game.portable
@@ -203,7 +191,6 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
                     )}
                 </div>
 
-                {/* Genre */}
                 {(game.genre?.category || game.genre?.type) && (
                     <p className="text-xs text-[#0a0f2e60] mt-1">
                         {[game.genre.category, game.genre.type].filter(Boolean).join(' · ')}
@@ -214,7 +201,7 @@ function GameCard({ game, onAction }: { game: Game; onAction: (game: Game) => vo
     );
 }
 
-// ─── Panel: Game Action (edit / delete options) ───────────────────────────────
+// ─── Panel: Game Action ───────────────────────────────────────────────────────
 
 function ActionPanel({ game, onEdit, onDeleted, onClose }: {
     game: Game;
@@ -292,10 +279,10 @@ function ActionPanel({ game, onEdit, onDeleted, onClose }: {
     );
 }
 
-// ─── Panel: Game Form (add / edit) ────────────────────────────────────────────
+// ─── Panel: Game Form ─────────────────────────────────────────────────────────
 
 function GameFormPanel({ initial, onClose, onSaved }: {
-    initial: Game | null; // null = adding new
+    initial: Game | null;
     onClose: () => void;
     onSaved: () => void;
 }) {
@@ -319,7 +306,6 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
     const set = (key: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
 
-    // Parse the exact field: "2, 4, 8" -> [2, 4, 8], ignoring non-numbers.
     const parseExact = (raw: string): number[] =>
         raw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
 
@@ -517,7 +503,6 @@ function FilterPanel({ filters, onChange, onClose }: {
 
 // ─── Right Panel Shell ────────────────────────────────────────────────────────
 
-// Wraps whatever content is active in the right panel with a title + close button.
 function RightPanelShell({ title, onClose, children }: {
     title: string;
     onClose: () => void;
@@ -543,13 +528,11 @@ function RightPanelShell({ title, onClose, children }: {
 
 // ─── Mobile Modal Shell ───────────────────────────────────────────────────────
 
-// On mobile, panel content renders inside a full-screen overlay instead.
 function MobileModal({ onClose, title, children }: {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
 }) {
-    // Close on Escape
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', handler);
@@ -588,24 +571,18 @@ function MobileModal({ onClose, title, children }: {
 export default function Dashboard() {
     const navigate = useNavigate();
 
-    // All games fetched from the API.
     const [games, setGames] = useState<Game[]>([]);
-    const [loading, setLoading] = useState(true);
+    // `loaded` flips true after the first fetch completes and never resets.
+    // Skeleton only shows before the first load; refreshes update cards in place.
+    const [loaded, setLoaded] = useState(false);
     const [fetchError, setFetchError] = useState('');
 
-    // Search bar state.
     const [search, setSearch] = useState('');
-
-    // Active filter values.
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-
-    // What is currently shown in the right panel.
     const [panel, setPanel] = useState<PanelView>({ type: 'none' });
-
-    // Active tab (only "games" for now, but tab system is extensible).
     const [tab] = useState<'games'>('games');
 
-    // Check for a valid JWT on mount; redirect to login if missing/expired.
+    // Redirect if JWT is missing or expired.
     useEffect(() => {
         const token = getToken();
         if (!token) { navigate('/login'); return; }
@@ -618,9 +595,7 @@ export default function Dashboard() {
         }
     }, [navigate]);
 
-    // Fetch games whenever search or filters change.
     const loadGames = useCallback(async () => {
-        setLoading(true);
         setFetchError('');
         try {
             const body: Record<string, unknown> = {};
@@ -642,28 +617,22 @@ export default function Dashboard() {
         } catch {
             setFetchError('Could not load games. Please try again.');
         } finally {
-            setLoading(false);
+            setLoaded(true);
         }
     }, [search, filters]);
 
     useEffect(() => { loadGames(); }, [loadGames]);
 
-    // Whether any filter is currently active (used for indicator dot).
     const hasActiveFilters = Object.values(filters).some(Boolean);
-
-    // Sign out: clear token and navigate to landing.
     const handleSignOut = () => { localStorage.removeItem('token'); navigate('/'); };
-
     const closePanel = () => setPanel({ type: 'none' });
 
-    // Derive the title for whatever is currently in the panel.
     const panelTitle =
         panel.type === 'add'    ? 'Add Game' :
         panel.type === 'edit'   ? 'Edit Game' :
         panel.type === 'action' ? panel.game.name :
         panel.type === 'filter' ? 'Filter Games' : '';
 
-    // Render the inner content for the current panel view.
     const panelContent = panel.type === 'none' ? null
         : panel.type === 'action' ? (
             <ActionPanel
@@ -681,28 +650,23 @@ export default function Dashboard() {
         ) : null;
 
     return (
-        /*
-         * h-screen + overflow-hidden on the root keeps the layout
-         * within the viewport so the dark sidebar never overlaps the gradient.
-         */
+        // Gradient spans full width. Right panel is transparent so the dark
+        // portion of the gradient shows through it naturally.
         <div className="h-screen overflow-hidden flex flex-col" style={{ background: AUTH_GRADIENT }}>
             <style>{`
                 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
 
-            {/* ── Nav ─────────────────────────────────────────── */}
+            {/* ── Nav ── */}
             <nav className="shrink-0 border-b border-[#0a0f2e15] backdrop-blur-sm" style={{ background: 'rgba(232,245,110,0.85)' }}>
                 <div className="flex items-center justify-between h-14 px-6">
-                    {/* Logo */}
                     <div className="flex items-center gap-2.5">
                         <img src={logo} alt="GNOrg" className="w-8 h-8" />
                         <span className="text-base font-bold tracking-tight text-[#0a0f2e]">
                             GN<span style={{ color: '#8aab00' }}>Org</span>
                         </span>
                     </div>
-
-                    {/* Sign out */}
                     <button
                         onClick={handleSignOut}
                         className="text-xs font-semibold text-[#0a0f2e80] hover:text-[#0a0f2e] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#0a0f2e10]"
@@ -712,15 +676,14 @@ export default function Dashboard() {
                 </div>
             </nav>
 
-            {/* ── Two-panel layout ─────────────────────────────── */}
+            {/* ── Two-panel layout ── */}
             <div className="flex flex-1 min-h-0">
 
-                {/* ── Left panel: games ─────────────────────────── */}
-                <div className="flex-1 flex flex-col min-w-0 overflow-y-auto px-6 py-8">
+                {/* ── Left panel: tab + toolbar fixed, grid scrolls ── */}
+                <div className="flex-1 flex flex-col min-w-0 px-6 py-8">
 
-                    {/* Tab bar */}
-                    <div className="flex gap-1 mb-6">
-                        {/* Extend this array to add more tabs in the future */}
+                    {/* Tab bar — does not scroll */}
+                    <div className="flex gap-1 mb-6 shrink-0">
                         {(['games'] as const).map((t) => (
                             <button
                                 key={t}
@@ -735,9 +698,8 @@ export default function Dashboard() {
                         ))}
                     </div>
 
-                    {/* Toolbar */}
-                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                        {/* Search input */}
+                    {/* Toolbar — does not scroll */}
+                    <div className="flex flex-wrap items-center gap-3 mb-6 shrink-0">
                         <div className="relative flex-1 min-w-[180px]">
                             <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0a0f2e50]" width="15" height="15" viewBox="0 0 15 15" fill="none">
                                 <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.4" />
@@ -752,7 +714,6 @@ export default function Dashboard() {
                             />
                         </div>
 
-                        {/* Filter button with active indicator */}
                         <button
                             onClick={() => setPanel({ type: 'filter' })}
                             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
@@ -770,7 +731,6 @@ export default function Dashboard() {
                             )}
                         </button>
 
-                        {/* Reset filters (only shown when filters are active) */}
                         {hasActiveFilters && (
                             <button
                                 onClick={() => setFilters(EMPTY_FILTERS)}
@@ -783,7 +743,6 @@ export default function Dashboard() {
                             </button>
                         )}
 
-                        {/* Add game button */}
                         <button
                             onClick={() => setPanel({ type: 'add' })}
                             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0a0f2e] hover:bg-[#1e2130] text-[#e8f56e] text-sm font-bold transition-colors ml-auto"
@@ -795,66 +754,66 @@ export default function Dashboard() {
                         </button>
                     </div>
 
-                    {/* ── Games grid ── */}
-                    {loading ? (
-                        /* Loading skeleton */
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {Array.from({ length: 8 }).map((_, i) => (
-                                <div key={i} className="bg-white/50 border border-[#0a0f2e10] rounded-2xl overflow-hidden animate-pulse">
-                                    <div className="aspect-[3/2] bg-[#0a0f2e08]" />
-                                    <div className="p-4 flex flex-col gap-2">
-                                        <div className="h-3 bg-[#0a0f2e10] rounded w-3/4" />
-                                        <div className="h-2 bg-[#0a0f2e08] rounded w-1/2" />
+                    {/* Games grid — only this region scrolls */}
+                    <div className="flex-1 overflow-y-auto min-h-0">
+                        {!loaded ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="bg-white/50 border border-[#0a0f2e10] rounded-2xl overflow-hidden animate-pulse">
+                                        <div className="aspect-[3/2] bg-[#0a0f2e08]" />
+                                        <div className="p-4 flex flex-col gap-2">
+                                            <div className="h-3 bg-[#0a0f2e10] rounded w-3/4" />
+                                            <div className="h-2 bg-[#0a0f2e08] rounded w-1/2" />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : fetchError ? (
-                        <div className="flex flex-col items-center justify-center py-24 gap-3">
-                            <ErrorBanner message={fetchError} />
-                            <button onClick={loadGames} className="text-xs text-[#0a0f2e] underline underline-offset-4">
-                                Try again
-                            </button>
-                        </div>
-                    ) : games.length === 0 ? (
-                        /* Empty state */
-                        <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-white/60 border border-[#0a0f2e15] flex items-center justify-center">
-                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" opacity="0.4">
-                                    <rect x="2" y="2" width="24" height="24" rx="4" stroke="#0a0f2e" strokeWidth="1.5" />
-                                    <path d="M9 14h10M14 9v10" stroke="#0a0f2e" strokeWidth="1.5" strokeLinecap="round" />
-                                </svg>
+                                ))}
                             </div>
-                            <div>
-                                <p className="text-sm font-semibold text-[#0a0f2e] mb-1">No games found</p>
-                                <p className="text-xs text-[#0a0f2e60]">
-                                    {hasActiveFilters || search ? 'Try adjusting your search or filters.' : 'Add your first game to get started.'}
-                                </p>
-                            </div>
-                            {!hasActiveFilters && !search && (
-                                <button
-                                    onClick={() => setPanel({ type: 'add' })}
-                                    className="px-5 py-2.5 rounded-xl bg-[#0a0f2e] text-[#e8f56e] text-sm font-bold hover:bg-[#1e2130] transition-colors"
-                                >
-                                    Add game
+                        ) : fetchError ? (
+                            <div className="flex flex-col items-center justify-center py-24 gap-3">
+                                <ErrorBanner message={fetchError} />
+                                <button onClick={loadGames} className="text-xs text-[#0a0f2e] underline underline-offset-4">
+                                    Try again
                                 </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {games.map((game) => (
-                                <GameCard
-                                    key={game._id}
-                                    game={game}
-                                    onAction={(g) => setPanel({ type: 'action', game: g })}
-                                />
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        ) : games.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+                                <div className="w-16 h-16 rounded-2xl bg-white/60 border border-[#0a0f2e15] flex items-center justify-center">
+                                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" opacity="0.4">
+                                        <rect x="2" y="2" width="24" height="24" rx="4" stroke="#0a0f2e" strokeWidth="1.5" />
+                                        <path d="M9 14h10M14 9v10" stroke="#0a0f2e" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-[#0a0f2e] mb-1">No games found</p>
+                                    <p className="text-xs text-[#0a0f2e60]">
+                                        {hasActiveFilters || search ? 'Try adjusting your search or filters.' : 'Add your first game to get started.'}
+                                    </p>
+                                </div>
+                                {!hasActiveFilters && !search && (
+                                    <button
+                                        onClick={() => setPanel({ type: 'add' })}
+                                        className="px-5 py-2.5 rounded-xl bg-[#0a0f2e] text-[#e8f56e] text-sm font-bold hover:bg-[#1e2130] transition-colors"
+                                    >
+                                        Add game
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {games.map((game) => (
+                                    <GameCard
+                                        key={game._id}
+                                        game={game}
+                                        onAction={(g) => setPanel({ type: 'action', game: g })}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* ── Right panel: dark sidebar (desktop only) ── */}
-                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto bg-[#0a0f2e]/90">
+                {/* ── Right panel: no background — gradient shows through ── */}
+                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto">
                     {panel.type !== 'none' && (
                         <RightPanelShell title={panelTitle} onClose={closePanel}>
                             {panelContent}
@@ -863,7 +822,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* ── Mobile modal (shown instead of right panel on small screens) ── */}
+            {/* ── Mobile modal ── */}
             {panel.type !== 'none' && (
                 <div className="lg:hidden">
                     <MobileModal title={panelTitle} onClose={closePanel}>
