@@ -314,12 +314,49 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
 
     const set = (key: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
 
     // Parse the exact field: "2, 4, 8" -> [2, 4, 8], ignoring non-numbers.
     const parseExact = (raw: string): number[] =>
         raw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
+
+    // Upload the chosen file to the server and store the returned URL.
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadError('');
+        setUploading(true);
+        try {
+            const data = new FormData();
+            data.append('image', file);
+
+            const res = await fetch(`${API}/games/upload-image`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${getToken()}` },
+                body: data,
+            });
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                if (body.error === 'FILE_TOO_LARGE') setUploadError('Image must be under 5 MB.');
+                else setUploadError('Upload failed. Please try again.');
+                return;
+            }
+
+            const { url } = await res.json();
+            setForm((f) => ({ ...f, coverImage: url }));
+        } catch {
+            setUploadError('Network error during upload.');
+        } finally {
+            setUploading(false);
+            // Reset the file input so the same file can be re-selected if needed.
+            e.target.value = '';
+        }
+    };
 
     const handleSubmit = async () => {
         if (!form.name.trim()) { setError('Name is required'); return; }
@@ -360,6 +397,11 @@ function GameFormPanel({ initial, onClose, onSaved }: {
         }
     };
 
+    const inputBase =
+        'bg-[#13151f] border border-[#ffffff20] rounded-lg px-4 py-2.5 text-sm text-white ' +
+        'placeholder-gray-500 focus:outline-none focus:border-[#e8f56e] focus:ring-1 ' +
+        'focus:ring-[#e8f56e] transition-all w-full';
+
     return (
         <div className="flex flex-col gap-4">
             <Field label="Name *" placeholder="Catan" value={form.name} onChange={set('name')} />
@@ -382,13 +424,54 @@ function GameFormPanel({ initial, onClose, onSaved }: {
                 <option value="false">No</option>
             </Field>
 
-            <Field label="Cover image URL" placeholder="https://…" value={form.coverImage} onChange={set('coverImage')} />
+            {/* Cover image upload */}
+            <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Cover image</label>
+
+                {/* Image preview */}
+                {form.coverImage && (
+                    <div className="relative w-full aspect-[3/2] rounded-lg overflow-hidden border border-[#ffffff20] bg-[#13151f]">
+                        <img src={form.coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                        <button
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, coverImage: '' }))}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-md bg-black/60 flex items-center justify-center text-white hover:bg-black/80 transition-all"
+                            aria-label="Remove image"
+                        >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
+                {/* File picker button */}
+                <label className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-dashed border-[#ffffff30] px-4 py-3 text-sm text-gray-400 hover:border-[#e8f56e50] hover:text-gray-200 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2v9M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M2 13h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                    </svg>
+                    {uploading ? 'Uploading…' : form.coverImage ? 'Replace image' : 'Upload image'}
+                    <input type="file" accept="image/*" className="sr-only" onChange={handleFileChange} disabled={uploading} />
+                </label>
+
+                {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+
+                {/* Manual URL fallback */}
+                <input
+                    type="text"
+                    placeholder="…or paste an image URL"
+                    value={form.coverImage}
+                    onChange={(e) => { setUploadError(''); set('coverImage')(e.target.value); }}
+                    className={inputBase}
+                />
+            </div>
 
             {error && <ErrorBanner message={error} />}
 
             <button
                 onClick={handleSubmit}
-                disabled={saving}
+                disabled={saving || uploading}
                 className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] disabled:opacity-50 transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide"
             >
                 {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add game'}

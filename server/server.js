@@ -1,11 +1,15 @@
 require("dotenv").config({ path: __dirname + "/.env" });
 
+const path = require("path");
 const express = require("express");
 const app = express();
 app.use(express.json());
 
 const cors = require("cors");
 app.use(cors());
+
+// Serve uploaded images as static files.
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API function imports.
 const { registerUser, verifyEmail } = require("./controllers/userRegistration.js");
@@ -17,6 +21,7 @@ const { delGame } = require("./controllers/delGame.js");
 const { modGame } = require("./controllers/editGame.js");
 const { fetchGames } = require("./controllers/getGames.js");
 const { requireAuth } = require("./utils/auth.js");
+const { uploadImage } = require("./utils/upload.js");
 
 // Registering paths for API.
 app.post("/register", registerUser);
@@ -26,6 +31,7 @@ app.post("/games/create", requireAuth, newGame);
 app.delete("/games/delete", requireAuth, delGame);
 app.patch("/games/edit", requireAuth, modGame);
 app.post("/games/get", requireAuth, fetchGames);
+app.post("/games/upload-image", requireAuth, uploadImage);
 app.get("/logoff", logoff);
 app.post("/request-password-reset", requestPasswordReset);
 app.post("/reset-password/:token", resetPassword);
