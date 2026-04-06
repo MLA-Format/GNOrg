@@ -3,6 +3,7 @@ import ErrorBanner from '../components/NewErrorBanner';
 import StatusBanner from '../components/NewStatusBanner';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../api';
 
 type Status = "loading" | "success" | "error";
 
@@ -18,7 +19,7 @@ export default function VerifyEmail() {
     useEffect(() => {
         const verify = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/verify-email/${token}`, {
+                const response = await fetch(`${API_BASE}/verify-email/${token}`, {
                     method: "GET"
                 });
 

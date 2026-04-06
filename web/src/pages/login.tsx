@@ -3,6 +3,7 @@ import ErrorBanner from '../components/NewErrorBanner';
 import NewLineEntry from '../components/NewLineEntry';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../api';
 
 export default function Login() {
 
@@ -31,7 +32,7 @@ export default function Login() {
         e.preventDefault();
         try {
             // Call login api.
-            const response = await fetch("http://localhost:3000/login", {
+            const response = await fetch(`${API_BASE}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password })

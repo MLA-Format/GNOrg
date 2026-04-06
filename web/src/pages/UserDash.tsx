@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/gnorg-logo.png';
 import ErrorBanner from '../components/NewErrorBanner';
+import { API_BASE } from '../api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ interface Filters {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API = 'http://localhost:3000';
+const API = API_BASE;
 
 const EMPTY_FILTERS: Filters = { playerCount: '', genreCategory: '', portable: '' };
 
