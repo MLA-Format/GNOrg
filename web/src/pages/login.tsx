@@ -3,6 +3,7 @@ import ErrorBanner from '../components/NewErrorBanner';
 import NewLineEntry from '../components/NewLineEntry';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../api';
 
 export default function Login() {
 

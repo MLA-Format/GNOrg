@@ -1,6 +1,7 @@
 import NewLineEntry from '../components/NewLineEntry.tsx'
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react'
+import { API_BASE } from '../api';
 
 export default function UserReg() {
 

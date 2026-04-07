@@ -1,5 +1,6 @@
 require("dotenv").config({ path: __dirname + "/.env" });
 
+const path = require("path");
 const express = require("express");
 const path = require("path");
 const app = express();
@@ -23,18 +24,20 @@ const { fetchGames } = require("./controllers/getGames.js");
 const { requireAuth } = require("./utils/auth.js");
 const { uploadImage } = require("./utils/upload.js");
 
-// Registering paths for API.
-app.post("/register", registerUser);
-app.get("/register/verifyEmail/:token", verifyEmail);
-app.post("/login", login);
-app.post("/games/create", requireAuth, newGame);
-app.delete("/games/delete", requireAuth, delGame);
-app.patch("/games/edit", requireAuth, modGame);
-app.post("/games/get", requireAuth, fetchGames);
-app.get("/logoff", logoff);
-app.post("/request-password-reset", requestPasswordReset);
-app.post("/reset-password/:token", resetPassword);
-app.post("/upload", requireAuth, uploadImage);
+// Registering paths for API (all routes under /api prefix).
+const router = require("express").Router();
+router.post("/register", registerUser);
+router.get("/verify-email/:token", verifyEmail);
+router.post("/login", login);
+router.post("/games/create", requireAuth, newGame);
+router.delete("/games/delete", requireAuth, delGame);
+router.patch("/games/edit", requireAuth, modGame);
+router.post("/games/get", requireAuth, fetchGames);
+router.post("/games/upload-image", requireAuth, uploadImage);
+router.get("/logoff", logoff);
+router.post("/request-password-reset", requestPasswordReset);
+router.post("/reset-password/:token", resetPassword);
+app.use("/api", router);
 
 // Initializing app.
 app.listen(3000, () => console.log("Server running on port 3000"));
