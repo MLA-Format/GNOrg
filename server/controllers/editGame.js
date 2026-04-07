@@ -20,6 +20,13 @@ const modGame = async (req, res) => {
             return res.sendStatus(401);
         }
 
+        if (name !== undefined && typeof name !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        if (coverImage !== undefined && typeof coverImage !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        if (genre !== undefined) {
+            if (genre.category !== undefined && typeof genre.category !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+            if (genre.type !== undefined && typeof genre.type !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+
         const result = await editGame({
             id,
             name,

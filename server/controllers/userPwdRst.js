@@ -9,12 +9,17 @@ const { tokenDenylist, activeResetTokens } = require("../utils/auth.js");
 // Function to handle requesting a password reset email.
 const requestPasswordReset = async (req, res) => {
   try {
+    if (typeof req.body.email !== "string") {
+      return res.sendStatus(400);
+    }
+
     await connect();
     const user = await checkEmailExistence(req.body.email);
 
-    // Check user does not exist.
-    if (!user)
-      return res.status(400).json({ message: "EMAIL_NOT_FOUND" });
+    // Always return 200 to avoid leaking whether the email is registered.
+    if (!user) {
+      return res.sendStatus(200);
+    }
 
     // Check if a reset token is already active for this user.
     if (activeResetTokens.has(user._id.toString()))
@@ -47,9 +52,19 @@ const resetPassword = async (req, res) => {
     if (tokenDenylist.has(req.params.token))
       return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
 
+    const { password } = req.body;
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: "PASSWORD_TOO_SHORT" });
+    }
+
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
+
+    if (decoded.type !== "password-reset") {
+      return res.status(400).json({ message: "RESET_TOKEN_INVALID" });
+    }
+
     await connect();
-    await updateUserPwd(decoded.id, await hashPassword(req.body.password));
+    await updateUserPwd(decoded.id, await hashPassword(password));
 
     // Add token to deny list and clear active reset token.
     tokenDenylist.add(req.params.token);

@@ -25,7 +25,17 @@ const requireAuth = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.type !== "auth") {
+            return res.status(401).json({ error: "Unauthorized." });
+        }
+
         req.user = decoded; // Setting req.user.id inside request.
+
+        // Issue a fresh 30-min token so activity extends the session.
+        const refreshed = jwt.sign({ id: decoded.id, type: "auth" }, process.env.JWT_SECRET, { expiresIn: "30m" });
+        res.setHeader("X-Refreshed-Token", refreshed);
+
         next();
     } catch (err) {
         return res.status(401).json({ error: "Unauthorized." });

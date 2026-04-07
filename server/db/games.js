@@ -61,7 +61,8 @@ const getGames = async (game) => db().find((() => {
   const query = { userId: game.userId };
 
   if (game.name) {
-    query.name = { $regex: game.name, $options: "i" };
+    const escaped = game.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.name = { $regex: escaped, $options: "i" };
   }
 
   if (game.players?.count != null) {

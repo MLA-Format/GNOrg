@@ -7,6 +7,10 @@ const jwt = require("jsonwebtoken");
 const login = async (req, res) => {
   const { username, password } = req.body;
 
+  if (typeof username !== "string" || typeof password !== "string") {
+    return res.sendStatus(400);
+  }
+
   try {
     await connect();
     const user = await checkUserExistence(username);
@@ -15,9 +19,13 @@ const login = async (req, res) => {
       return res.sendStatus(401);
     }
 
+    if (!user.isVerified) {
+      return res.status(403).json({ error: "EMAIL_NOT_VERIFIED" });
+    }
+
     // Create JWT
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id, type: "auth" },
       process.env.JWT_SECRET,
       { expiresIn: "30m" }
     );

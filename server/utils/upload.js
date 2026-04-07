@@ -9,12 +9,15 @@ const storage = multer.diskStorage({
     filename:    (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
 });
 
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
+
 // Reject non-image files and enforce 5MB limit.
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith("image/")) cb(null, true);
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ALLOWED_EXTENSIONS.has(ext)) cb(null, true);
         else cb(new Error("Only image files are allowed"));
     },
 }).single("image");

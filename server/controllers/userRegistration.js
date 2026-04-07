@@ -9,8 +9,16 @@ const { connect, checkUserExistence, checkEmailExistence, insertUser, findUserBy
 const registerUser = async (req, res) => {
   const { username, password, email } = req.body;
 
+  if (typeof username !== "string" || typeof email !== "string") {
+    return res.sendStatus(400);
+  }
+
   try {
     await connect();
+
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ message: "PASSWORD_TOO_SHORT" });
+    }
 
     const userExists = await checkUserExistence(username);
     if (userExists)
@@ -49,11 +57,16 @@ const registerUser = async (req, res) => {
 const verifyEmail = async (req, res) => {
   try {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
+
+    if (decoded.type !== "email-verification") {
+      return res.status(400).json({ message: "Invalid or expired token." });
+    }
+
     await connect();
     await setUserVerified(decoded.id);
 
     // Issue a new auth token so the frontend can auto-login after verification.
-    const authToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: "30m" });
+    const authToken = jwt.sign({ id: decoded.id, type: "auth" }, process.env.JWT_SECRET, { expiresIn: "30m" });
     res.status(200).json({ token: authToken });
   } catch (err) {
     console.error("Verification error:", err);

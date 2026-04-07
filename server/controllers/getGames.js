@@ -16,6 +16,19 @@ const fetchGames = async (req, res) => {
             return res.status(400).json({ error: "ID_INVALID" });
         }
 
+        if (name != null && typeof name !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (genre?.category != null && typeof genre.category !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (genre?.type != null && typeof genre.type !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (coverImage != null && typeof coverImage !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+
         const results = await getGames({
             id,
             name,

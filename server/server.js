@@ -5,8 +5,17 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
+const helmet = require("helmet");
+app.use(helmet());
+
 const cors = require("cors");
-app.use(cors());
+const allowedOrigin = process.env.ALLOWED_ORIGIN || "http://localhost:5173";
+app.use(cors({ origin: allowedOrigin, exposedHeaders: ['X-Refreshed-Token'] }));
+
+const rateLimit = require("express-rate-limit");
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const registerLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 
 // Serve uploaded images as static files.
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -25,16 +34,16 @@ const { uploadImage } = require("./utils/upload.js");
 
 // Registering paths for API (all routes under /api prefix).
 const router = require("express").Router();
-router.post("/register", registerUser);
+router.post("/register", registerLimiter, registerUser);
 router.get("/verify-email/:token", verifyEmail);
-router.post("/login", login);
+router.post("/login", loginLimiter, login);
 router.post("/games/create", requireAuth, newGame);
 router.delete("/games/delete", requireAuth, delGame);
 router.patch("/games/edit", requireAuth, modGame);
 router.post("/games/get", requireAuth, fetchGames);
 router.post("/games/upload-image", requireAuth, uploadImage);
-router.get("/logoff", logoff);
-router.post("/request-password-reset", requestPasswordReset);
+router.get("/logoff", requireAuth, logoff);
+router.post("/request-password-reset", resetLimiter, requestPasswordReset);
 router.post("/reset-password/:token", resetPassword);
 app.use("/api", router);
 

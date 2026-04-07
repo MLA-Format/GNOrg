@@ -63,6 +63,17 @@ const authHeaders = () => ({
     Authorization: `Bearer ${getToken()}`,
 });
 
+const apiFetch = async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+    const res = await fetch(input, init);
+    const refreshed = res.headers.get('X-Refreshed-Token');
+    if (refreshed) localStorage.setItem('token', refreshed);
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+    return res;
+};
+
 const formatPlayers = (players: Players | null): string | null => {
     if (!players) return null;
     const parts: string[] = [];
@@ -215,7 +226,7 @@ function ActionPanel({ game, onEdit, onDeleted, onClose }: {
     const handleDelete = async () => {
         setDeleting(true);
         try {
-            const res = await fetch(`${API}/games/delete`, {
+            const res = await apiFetch(`${API}/games/delete`, {
                 method: 'DELETE',
                 headers: authHeaders(),
                 body: JSON.stringify({ name: game.name }),
@@ -312,7 +323,7 @@ function GameFormPanel({ initial, onClose, onSaved }: {
         try {
             const data = new FormData();
             data.append('image', file);
-            const res = await fetch(`${API}/games/upload-image`, {
+            const res = await apiFetch(`${API}/games/upload-image`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${getToken()}` },
                 body: data,
@@ -358,7 +369,7 @@ function GameFormPanel({ initial, onClose, onSaved }: {
             };
             if (isEdit) payload.id = initial!._id;
 
-            const res = await fetch(`${API}/${isEdit ? 'games/edit' : 'games/create'}`, {
+            const res = await apiFetch(`${API}/${isEdit ? 'games/edit' : 'games/create'}`, {
                 method: isEdit ? 'PATCH' : 'POST',
                 headers: authHeaders(),
                 body: JSON.stringify(payload),
@@ -565,7 +576,7 @@ export default function Dashboard() {
             if (filters.genreCategory) body.genre = { category: filters.genreCategory };
             if (filters.portable !== '') body.portable = filters.portable === 'true';
 
-            const res = await fetch(`${API}/games/get`, {
+            const res = await apiFetch(`${API}/games/get`, {
                 method: 'POST',
                 headers: authHeaders(),
                 body: JSON.stringify(body),
@@ -622,12 +633,12 @@ export default function Dashboard() {
             {/* ── Nav ── */}
             <nav className="shrink-0 border-b border-[#0a0f2e15] backdrop-blur-sm" style={{ background: 'rgba(232,245,110,0.85)' }}>
                 <div className="flex items-center justify-between h-14 px-6">
-                    <div className="flex items-center gap-2.5">
+                    <button onClick={() => navigate('/')} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-0 p-0">
                         <img src={logo} alt="GNOrg" className="w-8 h-8" />
                         <span className="text-base font-bold tracking-tight text-[#0a0f2e]">
                             GN<span style={{ color: '#8aab00' }}>Org</span>
                         </span>
-                    </div>
+                    </button>
                     <button
                         onClick={handleSignOut}
                         className="text-xs font-semibold text-[#0a0f2e80] hover:text-[#0a0f2e] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#0a0f2e10]"

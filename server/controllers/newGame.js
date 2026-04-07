@@ -7,8 +7,18 @@ const newGame = async (req, res) => {
         const { name, players, genre, portable, coverImage } = req.body;
         const userId = req.user?.id;
 
-        if (!name) {
+        if (!name || typeof name !== 'string') {
             return res.status(400).json({ error: "NAME_REQ" });
+        }
+
+        if (genre?.category != null && typeof genre.category !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (genre?.type != null && typeof genre.type !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (coverImage != null && typeof coverImage !== 'string') {
+            return res.status(400).json({ error: "INVALID_INPUT" });
         }
 
         if (!userId) {

@@ -7,7 +7,7 @@ const delGame = async (req, res) => {
         const { name } = req.body;
         const userId = req.user?.id;
 
-        if (!name) {
+        if (!name || typeof name !== 'string') {
             return res.status(400).json({ error: "NAME_REQ" });
         }
 
