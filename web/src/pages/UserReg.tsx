@@ -1,6 +1,7 @@
 import NewLineEntry from '../components/NewLineEntry.tsx'
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react'
+import { API_BASE } from '../api';
 
 export default function UserReg() {
 
@@ -16,7 +17,7 @@ export default function UserReg() {
         if (error) return;
         try {
             // Call user registration api.
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
+            const response = await fetch(`${API_BASE}/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, username, password: password1 })

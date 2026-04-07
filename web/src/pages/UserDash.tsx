@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/gnorg-logo.png';
 import ErrorBanner from '../components/NewErrorBanner';
+import { API_BASE as API } from '../api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,8 +33,6 @@ interface Filters {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const API = import.meta.env.VITE_API_URL as string;
 
 const EMPTY_FILTERS: Filters = { playerCount: '', genreCategory: '', portable: '' };
 

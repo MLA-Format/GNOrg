@@ -4,6 +4,7 @@ import StatusBanner from '../components/NewStatusBanner';
 import NewLineEntry from '../components/NewLineEntry';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { API_BASE } from '../api';
 
 export default function ResetLogin() {
 
@@ -17,7 +18,7 @@ export default function ResetLogin() {
         e.preventDefault();
         try {
             // Call password reset request api.
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/request-password-reset`, {
+            const response = await fetch(`${API_BASE}/request-password-reset`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email })
