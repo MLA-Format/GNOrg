@@ -23,7 +23,7 @@ export default function ResetPassword() {
         if (error || !password1 || password1 !== password2) return;
         try {
             // Call password change api.
-            const response = await fetch(`${API_BASE}/reset-password/${token}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/reset-password/${token}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ password: password1 })

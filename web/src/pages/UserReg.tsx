@@ -17,7 +17,7 @@ export default function UserReg() {
         if (error) return;
         try {
             // Call user registration api.
-            const response = await fetch(`${API_BASE}/register`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, username, password: password1 })
