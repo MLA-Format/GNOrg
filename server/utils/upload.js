@@ -29,8 +29,8 @@ const uploadImage = (req, res) => {
         if (!req.file)
             return res.status(400).json({ error: "NO_FILE" });
 
-        // Return the public URL for the uploaded file.
-        res.status(201).json({ url: `${process.env.BASE_URL}/uploads/${req.file.filename}` });
+        // Return the relative path for the uploaded file.
+        res.status(201).json({ url: `/uploads/${req.file.filename}` });
     });
 };
 
