@@ -4,7 +4,6 @@ import StatusBanner from '../components/NewStatusBanner';
 import NewLineEntry from '../components/NewLineEntry';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../api';
 
 export default function ResetPassword() {
 

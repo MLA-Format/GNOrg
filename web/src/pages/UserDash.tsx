@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/gnorg-logo.png';
 import ErrorBanner from '../components/NewErrorBanner';
-import { API_BASE } from '../api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -337,41 +336,6 @@ function GameFormPanel({ initial, onClose, onSaved }: {
     const parseExact = (raw: string): number[] =>
         raw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
 
-    // Upload the chosen file to the server and store the returned URL.
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadError('');
-        setUploading(true);
-        try {
-            const data = new FormData();
-            data.append('image', file);
-
-            const res = await fetch(`${API}/games/upload-image`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${getToken()}` },
-                body: data,
-            });
-
-            if (!res.ok) {
-                const body = await res.json().catch(() => ({}));
-                if (body.error === 'FILE_TOO_LARGE') setUploadError('Image must be under 5 MB.');
-                else setUploadError('Upload failed. Please try again.');
-                return;
-            }
-
-            const { url } = await res.json();
-            setForm((f) => ({ ...f, coverImage: url }));
-        } catch {
-            setUploadError('Network error during upload.');
-        } finally {
-            setUploading(false);
-            // Reset the file input so the same file can be re-selected if needed.
-            e.target.value = '';
-        }
-    };
-
     const handleSubmit = async () => {
         if (!form.name.trim()) { setError('Name is required'); return; }
 
@@ -410,11 +374,6 @@ function GameFormPanel({ initial, onClose, onSaved }: {
             setSaving(false);
         }
     };
-
-    const inputBase =
-        'bg-[#13151f] border border-[#ffffff20] rounded-lg px-4 py-2.5 text-sm text-white ' +
-        'placeholder-gray-500 focus:outline-none focus:border-[#e8f56e] focus:ring-1 ' +
-        'focus:ring-[#e8f56e] transition-all w-full';
 
     return (
         <div className="flex flex-col gap-4">
