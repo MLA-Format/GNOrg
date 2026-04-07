@@ -312,7 +312,7 @@ function GameFormPanel({ initial, onClose, onSaved }: {
         try {
             const data = new FormData();
             data.append('image', file);
-            const res = await fetch(`${API}/upload`, {
+            const res = await fetch(`${API}/games/upload-image`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${getToken()}` },
                 body: data,
