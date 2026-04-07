@@ -33,7 +33,7 @@ interface Filters {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API = 'http://localhost:3000';
+const API = import.meta.env.VITE_API_URL as string;
 
 const EMPTY_FILTERS: Filters = { playerCount: '', genreCategory: '', portable: '' };
 
@@ -314,8 +314,36 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const set = (key: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [key]: v }));
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        setError('');
+        try {
+            const data = new FormData();
+            data.append('image', file);
+            const res = await fetch(`${API}/upload`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${getToken()}` },
+                body: data,
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                setError(body.error === 'FILE_TOO_LARGE' ? 'Image must be under 5 MB.' : 'Upload failed. Please try again.');
+                return;
+            }
+            const { url } = await res.json();
+            setForm((f) => ({ ...f, coverImage: url }));
+        } catch {
+            setError('Network error during upload.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     // Parse the exact field: "2, 4, 8" -> [2, 4, 8], ignoring non-numbers.
     const parseExact = (raw: string): number[] =>
@@ -382,13 +410,29 @@ function GameFormPanel({ initial, onClose, onSaved }: {
                 <option value="false">No</option>
             </Field>
 
-            <Field label="Cover image URL" placeholder="https://…" value={form.coverImage} onChange={set('coverImage')} />
+            {/* Cover image upload */}
+            <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Cover image</label>
+                {form.coverImage && (
+                    <img src={form.coverImage} alt="Cover preview" className="w-full h-32 object-cover rounded-lg border border-[#ffffff15]" />
+                )}
+                <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-dashed border-[#ffffff25] text-sm text-gray-400 hover:border-[#e8f56e50] hover:text-[#e8f56e] transition-all cursor-pointer">
+                    {uploading ? 'Uploading…' : form.coverImage ? 'Replace image' : 'Upload image'}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={handleImageUpload}
+                    />
+                </label>
+            </div>
 
             {error && <ErrorBanner message={error} />}
 
             <button
                 onClick={handleSubmit}
-                disabled={saving}
+                disabled={saving || uploading}
                 className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] disabled:opacity-50 transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide"
             >
                 {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add game'}
