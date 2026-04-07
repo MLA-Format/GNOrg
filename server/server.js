@@ -2,7 +2,6 @@ require("dotenv").config({ path: __dirname + "/.env" });
 
 const path = require("path");
 const express = require("express");
-const path = require("path");
 const app = express();
 app.use(express.json());
 
