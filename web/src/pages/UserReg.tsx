@@ -1,7 +1,7 @@
 import NewLineEntry from '../components/NewLineEntry.tsx'
 import StatusBanner from '../components/NewStatusBanner';
 import logo from '../assets/gnorg-logo.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../api';
 
@@ -15,6 +15,7 @@ export default function UserReg() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const navigate = useNavigate();
 
     const ERROR_MESSAGES: Record<string, string> = {
         USER_TAKEN: "That username is already taken.",
@@ -95,7 +96,7 @@ export default function UserReg() {
                 <div className="p-14 flex flex-col gap-6">
 
                     {/* Logo */}
-                    <Link to="/"><img src={logo} alt="GNOrg" className="w-10 h-10" /></Link>
+                    <img src={logo} alt="GNOrg" className="w-10 h-10 cursor-pointer" onClick={() => navigate('/')} />
 
                     {/* Header */}
                     <div className="flex flex-col gap-1">

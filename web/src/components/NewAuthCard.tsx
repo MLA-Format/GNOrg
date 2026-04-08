@@ -1,5 +1,5 @@
 import logo from '../assets/gnorg-logo.png';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthCardProps {
     title: string;
@@ -10,10 +10,12 @@ interface AuthCardProps {
 
 export default function AuthCard({ title, subtitle, children, onSubmit }: AuthCardProps) {
 
+    const navigate = useNavigate();
+
     const inner = (
         <div className="p-14 flex flex-col gap-6">
             {/* Logo */}
-            <Link to="/"><img src={logo} alt="GNOrg" className="w-10 h-10" /></Link>
+            <img src={logo} alt="GNOrg" className="w-10 h-10 cursor-pointer" onClick={() => navigate('/')} />
 
             {/* Header */}
             <div className="flex flex-col gap-1">
