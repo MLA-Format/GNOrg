@@ -95,7 +95,7 @@ export default function UserReg() {
                 <div className="p-14 flex flex-col gap-6">
 
                     {/* Logo */}
-                    <img src={logo} alt="GNOrg" className="w-10 h-10" />
+                    <Link to="/"><img src={logo} alt="GNOrg" className="w-10 h-10" /></Link>
 
                     {/* Header */}
                     <div className="flex flex-col gap-1">
