@@ -1,26 +1,16 @@
 // Imports.
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// Function to send a verification email to a user using nodemailer.
+// Function to send a verification email to a user using Resend.
 const sendEmail = async (options) => {
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        secure: true,
-        auth: {
-            user: process.env.EMAIL_USERNAME,
-            pass: process.env.EMAIL_PASSWORD,
-        },
-    });
+    const resend = new Resend(process.env.RESEND_APIKEY);
 
-    const mailOptions = {
+    await resend.emails.send({
         from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
         to: options.email,
         subject: options.subject,
         text: options.message,
-    }
-
-    await transporter.sendMail(mailOptions)
+    });
 }
 
 module.exports = { sendEmail };
