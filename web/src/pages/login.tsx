@@ -11,6 +11,7 @@ export default function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     // If a valid token is already stored, skip login.
@@ -30,6 +31,8 @@ export default function Login() {
     // Handle submitting login.
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
+        setLoading(true);
         try {
             // Call login api.
             const response = await fetch(`${API_BASE}/login`, {
@@ -39,9 +42,19 @@ export default function Login() {
             });
 
             // Check login api response.
-            if (!response.ok) {
+            if (response.status === 401) {
+                setError("Invalid username or password.");
+                return;
+            }
+            if (response.status === 403) {
                 const data = await response.json();
-                setError(data.message);
+                setError(data.error === "EMAIL_NOT_VERIFIED"
+                    ? "Please verify your email before signing in. Check your inbox for the verification link."
+                    : "Access denied. Please try again.");
+                return;
+            }
+            if (!response.ok) {
+                setError("Login failed. Please try again later.");
                 return;
             }
 
@@ -50,7 +63,9 @@ export default function Login() {
             localStorage.setItem("token", data.token);
             navigate("/dashboard");
         } catch {
-            setError("Login failed due to internal error. Please try again later.");
+            setError("Login failed due to a network error. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -90,9 +105,10 @@ export default function Login() {
 
             <button
                 type="submit"
-                className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] active:bg-[#d4e050] transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide shadow-lg"
+                disabled={loading}
+                className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] active:bg-[#d4e050] disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide shadow-lg"
             >
-                Sign in
+                {loading ? "Signing in..." : "Sign in"}
             </button>
 
             <p className="text-center text-xs text-gray-300">

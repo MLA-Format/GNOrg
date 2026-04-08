@@ -1,4 +1,6 @@
 import NewLineEntry from '../components/NewLineEntry.tsx'
+import StatusBanner from '../components/NewStatusBanner';
+import logo from '../assets/gnorg-logo.png';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../api';
@@ -11,10 +13,19 @@ export default function UserReg() {
     const [password1, setPassword1] = useState("");
     const [password2, setPassword2] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+
+    const ERROR_MESSAGES: Record<string, string> = {
+        USER_TAKEN: "That username is already taken.",
+        EMAIL_TAKEN: "An account with that email already exists.",
+        PASSWORD_TOO_SHORT: "Password must be at least 8 characters.",
+    };
 
     // Handle submitting registration.
     const handleSubmit = async () => {
-        if (error) return;
+        if (error || !email || !username || !password1 || !password2) return;
+        setLoading(true);
         try {
             // Call user registration api.
             const response = await fetch(`${API_BASE}/register`, {
@@ -25,12 +36,16 @@ export default function UserReg() {
 
             // Check user registration api response.
             if (!response.ok) {
-                const data = await response.json();
-                setError(data.message);
+                const data = await response.json().catch(() => ({}));
+                setError(ERROR_MESSAGES[data.message] ?? "Something went wrong, please try again.");
                 return;
             }
-        } catch (err) {
-            setError("Something went wrong, please try again");
+
+            setSuccess(true);
+        } catch {
+            setError("Something went wrong, please try again.");
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -79,8 +94,8 @@ export default function UserReg() {
             >
                 <div className="p-14 flex flex-col gap-6">
 
-                    {/* Logo placeholder */}
-                    <div className="w-10 h-10 rounded-md bg-[#2a2d3e] border border-[#ffffff20]" />
+                    {/* Logo */}
+                    <img src={logo} alt="GNOrg" className="w-10 h-10" />
 
                     {/* Header */}
                     <div className="flex flex-col gap-1">
@@ -143,8 +158,13 @@ export default function UserReg() {
                         </div>
                     </div>
 
+                    {/* Success */}
+                    {success && (
+                        <StatusBanner type="success" message="Account created! Check your inbox for a verification email before signing in." />
+                    )}
+
                     {/* Error */}
-                    {error && (
+                    {!success && error && (
                         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
                                 <circle cx="7" cy="7" r="6" stroke="#f87171" strokeWidth="1.5"/>
@@ -155,12 +175,15 @@ export default function UserReg() {
                     )}
 
                     {/* Submit */}
-                    <button
-                        onClick={handleSubmit}
-                        className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] active:bg-[#d4e050] transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide shadow-lg"
-                    >
-                        Create Account
-                    </button>
+                    {!success && (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="w-full bg-[#e8f56e] hover:bg-[#f0f8a0] active:bg-[#d4e050] disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-[#0a0f2e] text-sm font-bold py-3 rounded-lg cursor-pointer tracking-wide shadow-lg"
+                        >
+                            {loading ? "Creating account..." : "Create Account"}
+                        </button>
+                    )}
 
                     {/* Footer */}
                     <p className="text-center text-xs text-gray-300">
