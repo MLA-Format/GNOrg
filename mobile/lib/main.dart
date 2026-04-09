@@ -4,9 +4,6 @@ import 'theme.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/email_verified_page.dart';
-import 'pages/request_reset_page.dart';
-import 'pages/reset_password_page.dart';
-import 'pages/dashboard_page.dart';
 
 void main() {
   runApp(const GNOrgApp());
@@ -36,33 +33,19 @@ final _router = GoRouter(
         final token = state.pathParameters['token'] ?? '';
         return EmailVerifiedPage(
           verificationToken: token,
-          onSuccess: () => context.go('/dashboard'),
-          onGoToLogin: () => context.go('/login'),
-        );
-      },
-    ),
-    GoRoute(
-      path: '/reset-login',
-      builder: (context, state) => RequestResetPage(
-        onGoToLogin: () => context.go('/login'),
-      ),
-    ),
-    GoRoute(
-      path: '/reset-password/:token',
-      builder: (context, state) {
-        final token = state.pathParameters['token'] ?? '';
-        return ResetPasswordPage(
-          resetToken: token,
           onSuccess: () => context.go('/login'),
           onGoToLogin: () => context.go('/login'),
         );
       },
     ),
+    // Placeholder routes referenced by the auth pages:
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => DashboardPage(
-        onSignOut: () => context.go('/login'),
-      ),
+      builder: (context, state) => const _PlaceholderPage(label: 'Dashboard'),
+    ),
+    GoRoute(
+      path: '/reset-login',
+      builder: (context, state) => const _PlaceholderPage(label: 'Reset Password'),
     ),
   ],
 );
@@ -77,6 +60,25 @@ class GNOrgApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       routerConfig: _router,
+    );
+  }
+}
+
+/// Temporary placeholder for routes not yet implemented.
+class _PlaceholderPage extends StatelessWidget {
+  final String label;
+  const _PlaceholderPage({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.navy,
+      body: Center(
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 24),
+        ),
+      ),
     );
   }
 }
