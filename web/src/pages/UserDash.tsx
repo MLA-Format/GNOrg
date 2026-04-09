@@ -784,8 +784,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* ── Right panel: no background — gradient shows through ── */}
-                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto">
+                {/* ── Right panel: dark background for contrast ── */}
+                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto bg-[#0a0f2e]">
                     {panel.type !== 'none' && (
                         <RightPanelShell title={panelTitle} onClose={closePanel}>
                             {panelContent}
