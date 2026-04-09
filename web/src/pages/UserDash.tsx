@@ -482,7 +482,7 @@ function RightPanelShell({ title, onClose, children }: {
 }) {
     return (
         <div className="flex flex-col gap-6 h-full" style={{ animation: 'fadeIn 0.2s ease both' }}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-end gap-2">
                 <h2 className="text-base font-bold text-white">{title}</h2>
                 <button
                     onClick={onClose}
