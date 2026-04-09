@@ -12,6 +12,8 @@ const cors = require("cors");
 const allowedOrigin = process.env.ALLOWED_ORIGIN || "http://localhost:5173";
 app.use(cors({ origin: allowedOrigin, exposedHeaders: ['X-Refreshed-Token'] }));
 
+app.set("trust proxy", 1);
+
 const rateLimit = require("express-rate-limit");
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
 const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
