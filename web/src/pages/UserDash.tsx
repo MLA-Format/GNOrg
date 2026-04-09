@@ -121,7 +121,7 @@ function Field({
 
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{label}</label>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-widest" style={{ textShadow: '0 0 6px #0a0f2e, 0 0 12px #0a0f2e' }}>{label}</label>
             {children ? (
                 <select className={base} value={value} onChange={(e) => onChange(e.target.value)}>
                     {children}
@@ -409,7 +409,7 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
             {/* Cover image upload */}
             <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Cover image</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide" style={{ textShadow: '0 0 6px #0a0f2e, 0 0 12px #0a0f2e' }}>Cover image</label>
                 {form.coverImage && (
                     <img src={form.coverImage} alt="Cover preview" className="w-full h-32 object-cover rounded-lg border border-[#ffffff15]" />
                 )}
@@ -483,10 +483,11 @@ function RightPanelShell({ title, onClose, children }: {
     return (
         <div className="flex flex-col gap-6 h-full" style={{ animation: 'fadeIn 0.2s ease both' }}>
             <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white">{title}</h2>
+                <h2 className="text-base font-bold text-white" style={{ textShadow: '0 0 8px #0a0f2e, 0 0 16px #0a0f2e' }}>{title}</h2>
                 <button
                     onClick={onClose}
                     className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#ffffff10] transition-all"
+                    style={{ textShadow: '0 0 6px #0a0f2e' }}
                 >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                         <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -784,8 +785,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* ── Right panel: dark background for contrast ── */}
-                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto bg-[#0a0f2e]">
+                {/* ── Right panel: no background — gradient shows through ── */}
+                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto">
                     {panel.type !== 'none' && (
                         <RightPanelShell title={panelTitle} onClose={closePanel}>
                             {panelContent}
