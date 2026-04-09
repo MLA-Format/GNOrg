@@ -15,75 +15,73 @@ function mockRes() {
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('fetchGames', () => {
-  test('returns 401 when user is not authenticated', async () => {
-    const req = { body: {}, user: undefined };
-    const res = mockRes();
+test('returns 401 when user is not authenticated', async () => {
+  const req = { body: {}, user: undefined };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.sendStatus).toHaveBeenCalledWith(401);
-  });
+  expect(res.sendStatus).toHaveBeenCalledWith(401);
+});
 
-  test('returns 400 for an invalid ObjectId', async () => {
-    const req = { body: { id: 'not-a-valid-object-id' }, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 400 for an invalid ObjectId', async () => {
+  const req = { body: { id: 'not-a-valid-object-id' }, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'ID_INVALID' });
-  });
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({ error: 'ID_INVALID' });
+});
 
-  test('returns 400 when name is not a string', async () => {
-    const req = { body: { name: 42 }, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 400 when name is not a string', async () => {
+  const req = { body: { name: 42 }, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'INVALID_INPUT' });
-  });
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({ error: 'INVALID_INPUT' });
+});
 
-  test('returns 400 when genre.category is not a string', async () => {
-    const req = { body: { genre: { category: true } }, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 400 when genre.category is not a string', async () => {
+  const req = { body: { genre: { category: true } }, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: 'INVALID_INPUT' });
-  });
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(res.json).toHaveBeenCalledWith({ error: 'INVALID_INPUT' });
+});
 
-  test('returns 404 when no games match the query', async () => {
-    getGames.mockResolvedValue([]);
-    const req = { body: { name: 'Nonexistent Game' }, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 404 when no games match the query', async () => {
+  getGames.mockResolvedValue([]);
+  const req = { body: { name: 'Nonexistent Game' }, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.sendStatus).toHaveBeenCalledWith(404);
-  });
+  expect(res.sendStatus).toHaveBeenCalledWith(404);
+});
 
-  test('returns 200 with results on successful query', async () => {
-    const games = [{ _id: 'g1', name: 'Chess' }, { _id: 'g2', name: 'Catan' }];
-    getGames.mockResolvedValue(games);
-    const req = { body: { name: 'Chess' }, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 200 with results on successful query', async () => {
+  const games = [{ _id: 'g1', name: 'Chess' }, { _id: 'g2', name: 'Catan' }];
+  getGames.mockResolvedValue(games);
+  const req = { body: { name: 'Chess' }, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(games);
-  });
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith(games);
+});
 
-  test('returns 500 when database throws', async () => {
-    getGames.mockRejectedValue(new Error('DB error'));
-    const req = { body: {}, user: { id: 'uid1' } };
-    const res = mockRes();
+test('returns 500 when database throws', async () => {
+  getGames.mockRejectedValue(new Error('DB error'));
+  const req = { body: {}, user: { id: 'uid1' } };
+  const res = mockRes();
 
-    await fetchGames(req, res);
+  await fetchGames(req, res);
 
-    expect(res.sendStatus).toHaveBeenCalledWith(500);
-  });
+  expect(res.sendStatus).toHaveBeenCalledWith(500);
 });
