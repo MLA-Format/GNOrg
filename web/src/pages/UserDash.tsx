@@ -121,7 +121,7 @@ function Field({
 
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{label}</label>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-widest text-right">{label}</label>
             {children ? (
                 <select className={base} value={value} onChange={(e) => onChange(e.target.value)}>
                     {children}
@@ -409,7 +409,7 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
             {/* Cover image upload */}
             <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Cover image</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Cover image</label>
                 {form.coverImage && (
                     <img src={form.coverImage} alt="Cover preview" className="w-full h-32 object-cover rounded-lg border border-[#ffffff15]" />
                 )}
@@ -691,7 +691,7 @@ export default function Dashboard() {
                             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
                                 hasActiveFilters
                                     ? 'bg-[#0a0f2e] border-[#0a0f2e] text-[#e8f56e]'
-                                    : 'bg-white/60 border-[#0a0f2e20] text-[#0a0f2e] hover:border-[#0a0f2e40]'
+                                    : 'bg-white border-[#0a0f2e40] text-[#0a0f2e] hover:border-[#0a0f2e80]'
                             }`}
                         >
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -785,7 +785,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* ── Right panel: no background — gradient shows through ── */}
-                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col border-l border-[#ffffff15] px-6 py-8 overflow-y-auto">
+                <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col px-6 py-8 overflow-y-auto">
                     {panel.type !== 'none' && (
                         <RightPanelShell title={panelTitle} onClose={closePanel}>
                             {panelContent}
