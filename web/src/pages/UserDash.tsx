@@ -706,7 +706,7 @@ export default function Dashboard() {
                         {hasActiveFilters && (
                             <button
                                 onClick={() => setFilters(EMPTY_FILTERS)}
-                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#0a0f2e20] bg-white/60 text-xs text-[#0a0f2e60] hover:text-[#0a0f2e] hover:border-[#0a0f2e40] transition-all"
+                                className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#0a0f2e40] bg-white text-xs text-[#0a0f2e80] hover:text-[#0a0f2e] hover:border-[#0a0f2e80] transition-all"
                             >
                                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
                                     <path d="M1 1l9 9M10 1L1 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
