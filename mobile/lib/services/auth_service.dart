@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,12 +19,15 @@ class AuthService {
         headers: {'Content-Type': 'application/json; charset=utf-8'},
         body: utf8.encode(jsonEncode({'email': email, 'username': username, 'password': password})),
       );
+      debugPrint('[register] status: ${response.statusCode}');
+      debugPrint('[register] body: ${response.body}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         return null;
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return data['message'] as String? ?? 'Registration failed';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[register] exception: $e');
       return 'Something went wrong, please try again';
     }
   }
@@ -39,6 +43,8 @@ class AuthService {
         headers: {'Content-Type': 'application/json; charset=utf-8'},
         body: utf8.encode(jsonEncode({'username': username, 'password': password})),
       );
+      debugPrint('[login] status: ${response.statusCode}');
+      debugPrint('[login] body: ${response.body}');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final token = data['token'] as String?;
@@ -58,6 +64,7 @@ class AuthService {
         return 'Login failed (${response.statusCode})';
       }
     } catch (e) {
+      debugPrint('[login] exception: $e');
       return 'Login failed: $e';
     }
   }

@@ -15,9 +15,9 @@ app.use(cors({ origin: allowedOrigin, exposedHeaders: ['X-Refreshed-Token'] }));
 app.set("trust proxy", 1);
 
 const rateLimit = require("express-rate-limit");
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
-const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
-const registerLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
+const loginLimiter    = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, validate: { xForwardedForHeader: false } });
+const resetLimiter    = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, validate: { xForwardedForHeader: false } });
+const registerLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max:  5, validate: { xForwardedForHeader: false } });
 
 // Serve uploaded images as static files.
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
