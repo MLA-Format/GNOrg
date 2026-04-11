@@ -15,8 +15,8 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'username': username, 'password': password}),
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: utf8.encode(jsonEncode({'email': email, 'username': username, 'password': password})),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return null;
@@ -36,8 +36,8 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: utf8.encode(jsonEncode({'username': username, 'password': password})),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
