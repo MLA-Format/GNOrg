@@ -33,24 +33,55 @@ class _RegisterPageState extends State<RegisterPage> {
   String _error = '';
   bool _loading = false;
 
-  // ── Validation (mirrors the web useEffect) ─────────────────────────────────
+  // Tracks which API error code is currently displayed so field-change listeners
+  // can clear only the relevant error (mirrors the web `lastApiError` ref).
+  String _apiErrorCode = '';
+
+  static const _errorMessages = {
+    'USER_TAKEN': 'That username is already taken.',
+    'EMAIL_TAKEN': 'An account with that email already exists.',
+    'PASSWORD_TOO_SHORT': 'Password must be at least 8 characters.',
+  };
+
+  // ── Validation ─────────────────────────────────────────────────────────────
 
   static final _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
-  void _validate() {
+  /// Format/mismatch validation. Does not clear active API errors so that
+  /// changing the password field doesn't wipe a USER_TAKEN notice.
+  void _runFormatValidation() {
     final email = _emailCtrl.text;
     final pw1 = _password1Ctrl.text;
     final pw2 = _password2Ctrl.text;
 
     if (email.isNotEmpty && !_emailRegex.hasMatch(email)) {
       setState(() => _error = 'Please enter a valid email');
+      _apiErrorCode = '';
       return;
     }
     if (pw2.isNotEmpty && pw1 != pw2) {
       setState(() => _error = 'Password mismatch');
+      _apiErrorCode = '';
       return;
     }
-    setState(() => _error = '');
+    if (_apiErrorCode.isEmpty) setState(() => _error = '');
+  }
+
+  /// Called when the email field changes — clears EMAIL_TAKEN, then validates.
+  void _onEmailChange() {
+    if (_apiErrorCode == 'EMAIL_TAKEN') {
+      setState(() => _error = '');
+      _apiErrorCode = '';
+    }
+    _runFormatValidation();
+  }
+
+  /// Called when the username field changes — clears USER_TAKEN.
+  void _onUsernameChange() {
+    if (_apiErrorCode == 'USER_TAKEN') {
+      setState(() => _error = '');
+      _apiErrorCode = '';
+    }
   }
 
   // ── Password confirm field border colour ───────────────────────────────────
@@ -65,7 +96,7 @@ class _RegisterPageState extends State<RegisterPage> {
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   Future<void> _handleSubmit() async {
-    _validate();
+    _runFormatValidation();
     if (_error.isNotEmpty) return;
 
     setState(() => _loading = true);
@@ -80,7 +111,13 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _loading = false);
 
     if (err != null) {
-      setState(() => _error = err);
+      if (_errorMessages.containsKey(err)) {
+        _apiErrorCode = err;
+        setState(() => _error = _errorMessages[err]!);
+      } else {
+        _apiErrorCode = '';
+        setState(() => _error = err);
+      }
     } else {
       widget.onSuccess();
     }
@@ -91,9 +128,10 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _emailCtrl.addListener(_validate);
-    _password1Ctrl.addListener(_validate);
-    _password2Ctrl.addListener(_validate);
+    _emailCtrl.addListener(_onEmailChange);
+    _usernameCtrl.addListener(_onUsernameChange);
+    _password1Ctrl.addListener(_runFormatValidation);
+    _password2Ctrl.addListener(_runFormatValidation);
   }
 
   @override
@@ -121,6 +159,7 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _emailCtrl,
               placeholder: 'you@example.com',
               keyboardType: TextInputType.emailAddress,
+              maxLength: 254,
             ),
             const SizedBox(height: 16),
 
@@ -128,6 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
               label: 'Username',
               controller: _usernameCtrl,
               placeholder: 'your_username',
+              maxLength: 30,
             ),
             const SizedBox(height: 16),
 

@@ -21,10 +21,13 @@ const modGame = async (req, res) => {
         }
 
         if (name !== undefined && typeof name !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        if (name !== undefined && name.length > 100) return res.status(400).json({ error: "NAME_TOO_LONG" });
         if (coverImage !== undefined && typeof coverImage !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
         if (genre !== undefined) {
             if (genre.category !== undefined && typeof genre.category !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+            if (genre.category !== undefined && genre.category.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
             if (genre.type !== undefined && typeof genre.type !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+            if (genre.type !== undefined && genre.type.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
         }
 
         const result = await editGame({

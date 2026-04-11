@@ -2,7 +2,7 @@ import NewLineEntry from '../components/NewLineEntry.tsx'
 import StatusBanner from '../components/NewStatusBanner';
 import logo from '../assets/gnorg-logo.png';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { API_BASE } from '../api';
 
 export default function UserReg() {
@@ -16,6 +16,10 @@ export default function UserReg() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
+
+    // Tracks which API error code is currently displayed so field changes
+    // can clear only the relevant error (e.g. changing username clears USER_TAKEN).
+    const lastApiError = useRef('');
 
     const ERROR_MESSAGES: Record<string, string> = {
         USER_TAKEN: "That username is already taken.",
@@ -38,7 +42,9 @@ export default function UserReg() {
             // Check user registration api response.
             if (!response.ok) {
                 const data = await response.json().catch(() => ({}));
-                setError(ERROR_MESSAGES[data.message] ?? "Something went wrong, please try again.");
+                const code = data.message ?? '';
+                lastApiError.current = code;
+                setError(ERROR_MESSAGES[code] ?? "Something went wrong, please try again.");
                 return;
             }
 
@@ -50,8 +56,8 @@ export default function UserReg() {
         }
     }
 
-    // Check email is a valid email format using regex and that both entered
-    // passwords match.
+    // Format / mismatch validation. Does not clear active API errors so that
+    // changing the password field doesn't wipe a USER_TAKEN notice.
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,11 +66,29 @@ export default function UserReg() {
             return;
         }
 
-        if (password2 && password1 !== password2)
+        if (password2 && password1 !== password2) {
             setError("Password mismatch");
-        else
-            setError("");
+            return;
+        }
+
+        if (!lastApiError.current) setError("");
     }, [email, password1, password2])
+
+    // Clear USER_TAKEN when the username field changes.
+    useEffect(() => {
+        if (lastApiError.current === 'USER_TAKEN') {
+            lastApiError.current = '';
+            setError('');
+        }
+    }, [username])
+
+    // Clear EMAIL_TAKEN when the email field changes.
+    useEffect(() => {
+        if (lastApiError.current === 'EMAIL_TAKEN') {
+            lastApiError.current = '';
+            setError('');
+        }
+    }, [email])
 
     return (
         <div
@@ -112,6 +136,7 @@ export default function UserReg() {
                                 title="email"
                                 placeholder="you@example.com"
                                 value={email}
+                                maxLength={254}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="bg-[#13151f] border border-[#ffffff20] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#e8f56e] focus:ring-1 focus:ring-[#e8f56e] transition-all w-full"
                             />
@@ -123,6 +148,7 @@ export default function UserReg() {
                                 title="username"
                                 placeholder="your_username"
                                 value={username}
+                                maxLength={30}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="bg-[#13151f] border border-[#ffffff20] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#e8f56e] focus:ring-1 focus:ring-[#e8f56e] transition-all w-full"
                             />

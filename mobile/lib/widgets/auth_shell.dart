@@ -134,6 +134,7 @@ class AuthField extends StatelessWidget {
   final TextInputType keyboardType;
   final Color? borderColor;
   final VoidCallback? onEditingComplete;
+  final int? maxLength;
 
   const AuthField({
     super.key,
@@ -144,6 +145,7 @@ class AuthField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.borderColor,
     this.onEditingComplete,
+    this.maxLength,
   });
 
   @override
@@ -166,6 +168,8 @@ class AuthField extends StatelessWidget {
           obscureText: obscure,
           keyboardType: keyboardType,
           onEditingComplete: onEditingComplete,
+          maxLength: maxLength,
+          buildCounter: maxLength != null ? (_, {required currentLength, required isFocused, maxLength}) => null : null,
           style: GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white),
           cursorColor: AppColors.lime,
           decoration: InputDecoration(

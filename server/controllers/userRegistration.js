@@ -20,6 +20,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "PASSWORD_TOO_SHORT" });
     }
 
+    if (username.length > 30) {
+      return res.status(400).json({ message: "USERNAME_TOO_LONG" });
+    }
+
+    if (email.length > 254) {
+      return res.status(400).json({ message: "EMAIL_TOO_LONG" });
+    }
+
     const userExists = await checkUserExistence(username);
     if (userExists)
       return res.status(400).json({ message: "USER_TAKEN" });
