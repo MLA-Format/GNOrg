@@ -20,14 +20,14 @@ const modGame = async (req, res) => {
             return res.sendStatus(401);
         }
 
-        if (name !== undefined && typeof name !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
-        if (name !== undefined && name.length > 100) return res.status(400).json({ error: "NAME_TOO_LONG" });
-        if (coverImage !== undefined && typeof coverImage !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
-        if (genre !== undefined) {
-            if (genre.category !== undefined && typeof genre.category !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
-            if (genre.category !== undefined && genre.category.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
-            if (genre.type !== undefined && typeof genre.type !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
-            if (genre.type !== undefined && genre.type.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
+        if (name !== undefined && name !== null && typeof name !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        if (name !== undefined && name !== null && name.length > 100) return res.status(400).json({ error: "NAME_TOO_LONG" });
+        if (coverImage !== undefined && coverImage !== null && typeof coverImage !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+        if (genre !== undefined && genre !== null) {
+            if (genre.category !== undefined && genre.category !== null && typeof genre.category !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+            if (genre.category !== undefined && genre.category !== null && genre.category.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
+            if (genre.type !== undefined && genre.type !== null && typeof genre.type !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
+            if (genre.type !== undefined && genre.type !== null && genre.type.length > 50) return res.status(400).json({ error: "GENRE_TOO_LONG" });
         }
 
         const result = await editGame({
