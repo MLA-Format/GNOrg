@@ -11,11 +11,21 @@ const newGame = async (req, res) => {
             return res.status(400).json({ error: "NAME_REQ" });
         }
 
+        if (name.length > 100) {
+            return res.status(400).json({ error: "NAME_TOO_LONG" });
+        }
+
         if (genre?.category != null && typeof genre.category !== 'string') {
             return res.status(400).json({ error: "INVALID_INPUT" });
         }
+        if (genre?.category != null && genre.category.length > 50) {
+            return res.status(400).json({ error: "GENRE_TOO_LONG" });
+        }
         if (genre?.type != null && typeof genre.type !== 'string') {
             return res.status(400).json({ error: "INVALID_INPUT" });
+        }
+        if (genre?.type != null && genre.type.length > 50) {
+            return res.status(400).json({ error: "GENRE_TOO_LONG" });
         }
         if (coverImage != null && typeof coverImage !== 'string') {
             return res.status(400).json({ error: "INVALID_INPUT" });

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GNOrg — Use Case Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f0f1a;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a78bfa;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #64748b;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .diagram {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* Actor column */
+  .actor-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .actor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+  }
+
+  .actor-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 2px solid;
+  }
+
+  .actor-guest .actor-icon {
+    background: #1e1b4b;
+    border-color: #6366f1;
+    color: #a5b4fc;
+  }
+
+  .actor-auth .actor-icon {
+    background: #1a1a2e;
+    border-color: #8b5cf6;
+    color: #c4b5fd;
+  }
+
+  .actor-label {
+    font-size: 0.72rem;
+    text-align: center;
+    color: #94a3b8;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    max-width: 80px;
+  }
+
+  /* System boundary */
+  .system {
+    flex: 1;
+    min-width: 520px;
+    border: 1.5px solid #312e81;
+    border-radius: 16px;
+    padding: 24px 20px 28px;
+    position: relative;
+    background: #12122a;
+  }
+
+  .system-label {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f0f1a;
+    padding: 0 16px;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6366f1;
+    white-space: nowrap;
+  }
+
+  /* Sections inside system */
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .section:last-child { margin-bottom: 0; }
+
+  .section-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 10px;
+    padding-left: 4px;
+    border-left: 2px solid #312e81;
+    padding-left: 8px;
+  }
+
+  .use-cases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .uc {
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: default;
+    white-space: nowrap;
+  }
+
+  .uc:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25);
+  }
+
+  /* Color variants */
+  .uc-public {
+    background: #1e1b4b;
+    border-color: #4f46e5;
+    color: #a5b4fc;
+  }
+
+  .uc-auth {
+    background: #1e1035;
+    border-color: #7c3aed;
+    color: #c4b5fd;
+  }
+
+  .uc-game {
+    background: #0d1f2d;
+    border-color: #0891b2;
+    color: #7dd3fc;
+  }
+
+  .uc-both {
+    background: #1a1635;
+    border-color: #6d28d9;
+    color: #ddd6fe;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid;
+  }
+
+  .legend-dot.public  { background: #1e1b4b; border-color: #4f46e5; }
+  .legend-dot.auth    { background: #1e1035; border-color: #7c3aed; }
+  .legend-dot.game    { background: #0d1f2d; border-color: #0891b2; }
+  .legend-dot.both    { background: #1a1635; border-color: #6d28d9; }
+
+  /* Connector lines (decorative SVG overlay via pseudo) */
+  .connector {
+    display: flex;
+    align-items: center;
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .connector svg {
+    width: 100%;
+    height: 2px;
+    overflow: visible;
+  }
+</style>
+</head>
+<body>
+
+<h1>GNOrg</h1>
+<p class="subtitle">Use Case Diagram &nbsp;·&nbsp; Game Collection Manager</p>
+
+<div class="diagram">
+
+  <!-- Guest Actor -->
+  <div class="actor-col">
+    <div class="actor actor-guest">
+      <div class="actor-icon">🙍</div>
+      <div class="actor-label">Guest User</div>
+    </div>
+    <svg width="2" height="120"><line x1="1" y1="0" x2="1" y2="120" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="4,4"/></svg>
+    <div class="actor actor-auth" style="margin-top:4px;">
+      <div class="actor-icon">🎮</div>
+      <div class="actor-label">Registered User</div>
+    </div>
+  </div>
+
+  <!-- System Boundary -->
+  <div class="system">
+    <span class="system-label">«system» GNOrg Application</span>
+
+    <!-- Public / Auth section -->
+    <div class="section">
+      <div class="section-title">Authentication &amp; Account</div>
+      <div class="use-cases">
+        <span class="uc uc-public">Register Account</span>
+        <span class="uc uc-public">Verify Email</span>
+        <span class="uc uc-public">Login</span>
+        <span class="uc uc-auth">Logout</span>
+        <span class="uc uc-public">Request Password Reset</span>
+        <span class="uc uc-public">Reset Password via Token</span>
+      </div>
+    </div>
+
+    <!-- Game Management -->
+    <div class="section">
+      <div class="section-title">Game Collection Management &nbsp;«requires auth»</div>
+      <div class="use-cases">
+        <span class="uc uc-game">Browse Games</span>
+        <span class="uc uc-game">Filter Games</span>
+        <span class="uc uc-game">Create Game</span>
+        <span class="uc uc-game">Edit Game</span>
+        <span class="uc uc-game">Delete Game</span>
+        <span class="uc uc-game">Upload Cover Image</span>
+      </div>
+    </div>
+
+    <!-- System services -->
+    <div class="section">
+      <div class="section-title">System Services &nbsp;«included»</div>
+      <div class="use-cases">
+        <span class="uc uc-both">Send Verification Email</span>
+        <span class="uc uc-both">Send Password Reset Email</span>
+        <span class="uc uc-both">Enforce Rate Limiting</span>
+        <span class="uc uc-both">JWT Token Refresh</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right side: system actors -->
+  <div class="actor-col">
+    <div class="actor actor-auth">
+      <div class="actor-icon">📧</div>
+      <div class="actor-label">Email Service (Resend)</div>
+    </div>
+    <svg width="2" height="80"><line x1="1" y1="0" x2="1" y2="80" stroke="#6d28d9" stroke-width="1.5" stroke-dasharray="4,4"/></svg>
+    <div class="actor actor-auth">
+      <div class="actor-icon">🗄️</div>
+      <div class="actor-label">MongoDB Database</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot public"></div> Public / Unauthenticated</div>
+  <div class="legend-item"><div class="legend-dot auth"></div> Authenticated Only</div>
+  <div class="legend-item"><div class="legend-dot game"></div> Game Management</div>
+  <div class="legend-item"><div class="legend-dot both"></div> System / Included</div>
+</div>
+
+</body>
+</html>

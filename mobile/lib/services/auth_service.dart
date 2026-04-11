@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL for the GNOrg backend.
-const String _baseUrl = 'http://143.198.2.194/api';
+const String _baseUrl = 'http://143.198.2.194:3000/api';
 
 class AuthService {
   /// Registers a new user. Returns null on success, or an error message string.
@@ -49,10 +49,16 @@ class AuthService {
         }
         return 'No token received';
       }
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['message'] as String? ?? 'Login failed';
-    } catch (_) {
-      return 'Login failed due to internal error. Please try again later.';
+      if (response.statusCode == 401) return 'Invalid username or password';
+      if (response.statusCode == 403) return 'Please verify your email before logging in';
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['message'] as String? ?? 'Login failed';
+      } catch (_) {
+        return 'Login failed (${response.statusCode})';
+      }
+    } catch (e) {
+      return 'Login failed: $e';
     }
   }
 

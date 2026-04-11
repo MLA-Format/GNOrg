@@ -105,6 +105,8 @@ function Field({
     placeholder,
     value,
     onChange,
+    min,
+    maxLength,
     children,
 }: {
     label: string;
@@ -112,6 +114,8 @@ function Field({
     placeholder?: string;
     value: string;
     onChange: (v: string) => void;
+    min?: string;
+    maxLength?: number;
     children?: React.ReactNode;
 }) {
     const base =
@@ -132,6 +136,8 @@ function Field({
                     placeholder={placeholder}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
+                    min={min}
+                    maxLength={maxLength}
                     className={base}
                 />
             )}
@@ -387,18 +393,18 @@ function GameFormPanel({ initial, onClose, onSaved }: {
 
     return (
         <div className="flex flex-col gap-4">
-            <Field label="Name *" placeholder="Catan" value={form.name} onChange={set('name')} />
+            <Field label="Name *" placeholder="Catan" value={form.name} onChange={set('name')} maxLength={100} />
 
             <div className="grid grid-cols-2 gap-3">
-                <Field label="Players min" type="number" placeholder="1" value={form.playersMin} onChange={set('playersMin')} />
-                <Field label="Players max" type="number" placeholder="4" value={form.playersMax} onChange={set('playersMax')} />
+                <Field label="Players min" type="number" placeholder="1" value={form.playersMin} onChange={set('playersMin')} min="0" />
+                <Field label="Players max" type="number" placeholder="4" value={form.playersMax} onChange={set('playersMax')} min="0" />
             </div>
 
-            <Field label="Exact counts (e.g. 2, 4, 8)" placeholder="2, 4, 8" value={form.playersExact} onChange={set('playersExact')} />
+            <Field label="Exact counts (e.g. 2, 4, 8)" placeholder="2, 4, 8" value={form.playersExact} onChange={set('playersExact')} maxLength={100} />
 
             <div className="grid grid-cols-2 gap-3">
-                <Field label="Genre category" placeholder="Strategy" value={form.genreCategory} onChange={set('genreCategory')} />
-                <Field label="Genre type"     placeholder="Eurogame"  value={form.genreType}     onChange={set('genreType')} />
+                <Field label="Genre" placeholder="Strategy" value={form.genreCategory} onChange={set('genreCategory')} maxLength={50} />
+                <Field label="Game type" placeholder="Eurogame" value={form.genreType} onChange={set('genreType')} maxLength={50} />
             </div>
 
             <Field label="Portable" value={form.portable} onChange={set('portable')}>
@@ -453,8 +459,8 @@ function FilterPanel({ filters, onChange, onClose }: {
 
     return (
         <div className="flex flex-col gap-4">
-            <Field label="Player count" type="number" placeholder="4" value={local.playerCount} onChange={set('playerCount')} />
-            <Field label="Genre category" placeholder="Strategy" value={local.genreCategory} onChange={set('genreCategory')} />
+            <Field label="Player count" type="number" placeholder="4" value={local.playerCount} onChange={set('playerCount')} min="0" />
+            <Field label="Genre" placeholder="Strategy" value={local.genreCategory} onChange={set('genreCategory')} />
             <Field label="Portable" value={local.portable} onChange={set('portable')}>
                 <option value="">— any —</option>
                 <option value="true">Yes</option>
@@ -548,6 +554,9 @@ export default function Dashboard() {
     // Skeleton only shows before the first load; refreshes update cards in place.
     const [loaded, setLoaded] = useState(false);
     const [fetchError, setFetchError] = useState('');
+    // Tracks whether the user has ever had any games. Null = not yet determined.
+    // Used to distinguish "no games yet" from "no games matched your search".
+    const [hasAnyGames, setHasAnyGames] = useState<boolean | null>(null);
 
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -582,10 +591,20 @@ export default function Dashboard() {
                 body: JSON.stringify(body),
             });
 
-            if (res.status === 404) { setGames([]); return; }
+            if (res.status === 404) {
+                setGames([]);
+                if (!search && !Object.values(filters).some(Boolean)) setHasAnyGames(false);
+                return;
+            }
             if (!res.ok) throw new Error('Fetch failed');
 
-            setGames(await res.json());
+            const fetched = await res.json();
+            setGames(fetched);
+            if (fetched.length > 0) {
+                setHasAnyGames(true);
+            } else if (!search && !Object.values(filters).some(Boolean)) {
+                setHasAnyGames(false);
+            }
         } catch {
             setFetchError('Could not load games. Please try again.');
         } finally {
@@ -756,12 +775,14 @@ export default function Dashboard() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[#0a0f2e] mb-1">No games found</p>
+                                    <p className="text-sm font-semibold text-[#0a0f2e] mb-1">
+                                        {hasAnyGames ? 'No games found' : 'No games yet'}
+                                    </p>
                                     <p className="text-xs text-[#0a0f2e60]">
-                                        {hasActiveFilters || search ? 'Try adjusting your search or filters.' : 'Add your first game to get started.'}
+                                        {hasAnyGames ? 'Try adjusting your search or filters.' : 'Add your first game to get started.'}
                                     </p>
                                 </div>
-                                {!hasActiveFilters && !search && (
+                                {!hasAnyGames && (
                                     <button
                                         onClick={() => setPanel({ type: 'add' })}
                                         className="px-5 py-2.5 rounded-xl bg-[#0a0f2e] text-[#e8f56e] text-sm font-bold hover:bg-[#1e2130] transition-colors"
