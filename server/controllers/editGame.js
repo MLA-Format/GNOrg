@@ -20,6 +20,11 @@ const modGame = async (req, res) => {
             return res.sendStatus(401);
         }
 
+        if (players?.min != null && players.min < 0) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (players?.max != null && players.max < 0) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (Array.isArray(players?.exact) && players.exact.some(n => n < 0)) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (players?.min != null && players?.max != null && players.max < players.min) return res.status(400).json({ error: "INVALID_PLAYER_RANGE" });
+
         if (name !== undefined && name !== null && typeof name !== "string") return res.status(400).json({ error: "INVALID_INPUT" });
         if (name !== undefined && name !== null && name.length > 100) return res.status(400).json({ error: "NAME_TOO_LONG" });
         if (coverImage !== undefined && coverImage !== null && typeof coverImage !== "string") return res.status(400).json({ error: "INVALID_INPUT" });

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Base URL for the GNOrg backend.
-const String _baseUrl = 'http://143.198.2.194:3000/api';
+const String _baseUrl = 'https://gnorg.net/api';
 
 class AuthService {
   /// Registers a new user. Returns null on success, or an error message string.
@@ -115,6 +115,49 @@ class AuthService {
       return token;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Requests a password reset email. Returns null on success, or an error message.
+  static Future<String?> requestPasswordReset({required String email}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/request-password-reset'),
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: utf8.encode(jsonEncode({'email': email})),
+      );
+      if (response.statusCode == 200) return null;
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final msg = data['message'] as String? ?? '';
+        if (msg == 'EMAIL_NOT_FOUND') return 'No account found with that email.';
+      } catch (_) {}
+      return 'Something went wrong, please try again.';
+    } catch (e) {
+      return 'Something went wrong, please try again.';
+    }
+  }
+
+  /// Resets the password using a reset token. Returns null on success, or an error message.
+  static Future<String?> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/reset-password/$token'),
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: utf8.encode(jsonEncode({'password': password})),
+      );
+      if (response.statusCode == 200) return null;
+      try {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final msg = data['message'] as String? ?? '';
+        if (msg == 'RESET_TOKEN_EXPIRED') return 'This reset link has expired.';
+      } catch (_) {}
+      return 'Invalid or already used reset link.';
+    } catch (e) {
+      return 'Something went wrong, please try again.';
     }
   }
 

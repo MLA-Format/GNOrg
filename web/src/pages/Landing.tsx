@@ -20,7 +20,7 @@ const features = [
             </svg>
         ),
         title: "Tag and filter",
-        description: "Attach genres, player counts, and custom tags. Find exactly the right game in seconds."
+        description: "Attach genres and player counts. Find exactly the right game in seconds."
     },
     {
         icon: (
@@ -122,7 +122,6 @@ export default function LandingPage() {
                 <div className="container" style={{ paddingTop: 'clamp(2rem, 4vw, 4rem)', paddingBottom: 'clamp(2rem, 4vw, 4rem)' }}>
                     <div className="grid md:grid-cols-3 grid-cols-1 gap-8 text-center">
                         {[
-                            { value: "Unlimited", label: "Games in your library" },
                             { value: "Any device", label: "Access from anywhere" },
                             { value: "Free", label: "No cost, no catch" },
                         ].map(({ value, label }) => (

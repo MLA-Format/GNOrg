@@ -15,6 +15,13 @@ const newGame = async (req, res) => {
             return res.status(400).json({ error: "NAME_TOO_LONG" });
         }
 
+        if (players?.min != null && players.min < 0) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (players?.max != null && players.max < 0) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (Array.isArray(players?.exact) && players.exact.some(n => n < 0)) return res.status(400).json({ error: "INVALID_PLAYER_COUNT" });
+        if (players?.min != null && players?.max != null && players.max < players.min) {
+            return res.status(400).json({ error: "INVALID_PLAYER_RANGE" });
+        }
+
         if (genre?.category != null && typeof genre.category !== 'string') {
             return res.status(400).json({ error: "INVALID_INPUT" });
         }
