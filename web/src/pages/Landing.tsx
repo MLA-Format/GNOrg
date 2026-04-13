@@ -120,7 +120,7 @@ export default function LandingPage() {
             {/* Stats */}
             <section>
                 <div className="container" style={{ paddingTop: 'clamp(2rem, 4vw, 4rem)', paddingBottom: 'clamp(2rem, 4vw, 4rem)' }}>
-                    <div className="grid md:grid-cols-3 grid-cols-1 gap-8 text-center">
+                    <div className="grid md:grid-cols-2 grid-cols-1 gap-8 text-center">
                         {[
                             { value: "Any device", label: "Access from anywhere" },
                             { value: "Free", label: "No cost, no catch" },
