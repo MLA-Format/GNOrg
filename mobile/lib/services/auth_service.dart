@@ -12,9 +12,11 @@ class AuthService {
     required String email,
     required String username,
     required String password,
+    http.Client? httpClient,
   }) async {
+    final client = httpClient ?? http.Client();
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$_baseUrl/register'),
         headers: {'Content-Type': 'application/json; charset=utf-8'},
         body: utf8.encode(jsonEncode({'email': email, 'username': username, 'password': password})),
@@ -25,7 +27,11 @@ class AuthService {
         return null;
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['message'] as String? ?? 'Registration failed';
+      final message = data['message'] as String? ?? '';
+      if (message == 'USER_TAKEN') return 'Username is already taken';
+      if (message == 'EMAIL_TAKEN') return 'Email is already registered';
+      if (message == 'PASSWORD_TOO_SHORT') return 'Password must be at least 8 characters';
+      return message.isNotEmpty ? message : 'Registration failed';
     } catch (e) {
       debugPrint('[register] exception: $e');
       return 'Something went wrong, please try again';
@@ -36,9 +42,11 @@ class AuthService {
   static Future<String?> login({
     required String username,
     required String password,
+    http.Client? httpClient,
   }) async {
+    final client = httpClient ?? http.Client();
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$_baseUrl/login'),
         headers: {'Content-Type': 'application/json; charset=utf-8'},
         body: utf8.encode(jsonEncode({'username': username, 'password': password})),
@@ -55,8 +63,7 @@ class AuthService {
         }
         return 'No token received';
       }
-      if (response.statusCode == 401) return 'Invalid username or password';
-      if (response.statusCode == 403) return 'Please verify your email before logging in';
+      if (response.statusCode == 403) return 'Please verify your email before signing in';
       try {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data['message'] as String? ?? 'Login failed';
@@ -65,7 +72,7 @@ class AuthService {
       }
     } catch (e) {
       debugPrint('[login] exception: $e');
-      return 'Login failed: $e';
+      return 'Login failed, please try again later';
     }
   }
 
