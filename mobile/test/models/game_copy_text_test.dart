@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gnorg_mobile/models/game.dart';
+import 'package:gnorg_mobile/services/game_service.dart';
 
 void main() {
   test('returns just the name when there are no details', () {
@@ -8,32 +8,33 @@ void main() {
   });
 
   test('formats min-max player range', () {
-    final game = Game(id: '1', name: 'Catan', players: GamePlayers(min: 3, max: 6));
+    final game = Game(id: '1', name: 'Catan', players: Players(min: 3, max: 6));
     expect(game.copyText, contains('3-6 players'));
   });
 
   test('formats min-only player count', () {
-    final game = Game(id: '1', name: 'Poker', players: GamePlayers(min: 2));
+    final game = Game(id: '1', name: 'Poker', players: Players(min: 2));
     expect(game.copyText, contains('2+ players'));
   });
 
   test('formats max-only player count', () {
-    final game = Game(id: '1', name: 'Solitaire', players: GamePlayers(max: 1));
+    final game = Game(id: '1', name: 'Solitaire', players: Players(max: 1));
     expect(game.copyText, contains('up to 1 players'));
   });
 
   test('formats exact player list', () {
-    final game = Game(id: '1', name: 'Duel', players: GamePlayers(exact: [2]));
+    final game = Game(id: '1', name: 'Duel', players: Players(exact: [2]));
     expect(game.copyText, contains('2 players'));
   });
 
   test('formats category and type together', () {
-    final game = Game(id: '1', name: 'TI4', genreCategory: 'Strategy', genreType: 'Space Opera');
+    final game = Game(
+        id: '1', name: 'TI4', genre: Genre(category: 'Strategy', type: 'Space Opera'));
     expect(game.copyText, contains('Strategy / Space Opera'));
   });
 
   test('formats category-only genre', () {
-    final game = Game(id: '1', name: 'Risk', genreCategory: 'Strategy');
+    final game = Game(id: '1', name: 'Risk', genre: Genre(category: 'Strategy'));
     expect(game.copyText, contains('Strategy'));
     expect(game.copyText, isNot(contains('/')));
   });
@@ -52,11 +53,10 @@ void main() {
     final game = Game(
       id: '1',
       name: 'Catan',
-      players: GamePlayers(min: 3, max: 6),
-      genreCategory: 'Strategy',
-      genreType: 'Eurogame',
+      players: Players(min: 3, max: 6),
+      genre: Genre(category: 'Strategy', type: 'Eurogame'),
       portable: false,
     );
-    expect(game.copyText, equals('Catan — 3-6 players, Strategy / Eurogame, not portable'));
+    expect(game.copyText, equals('Catan \u2014 3-6 players, Strategy / Eurogame, not portable'));
   });
 }

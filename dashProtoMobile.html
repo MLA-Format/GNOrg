@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GNOrg — Dashboard (Mobile Prototype)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    /* ── Phone shell ── */
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 44px;
+      border: 10px solid #2a2a3e;
+      box-shadow:
+        0 0 0 1px #3a3a5e,
+        0 40px 80px rgba(0,0,0,0.7),
+        inset 0 0 0 1px #1a1a2e;
+      overflow: hidden;
+      position: relative;
+      background: #0a0f2e;
+    }
+
+    /* Notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 120px; height: 30px;
+      background: #2a2a3e;
+      border-radius: 0 0 20px 20px;
+      z-index: 20;
+    }
+
+    /* ── Screen ── */
+    .screen {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #0a0f2e;
+    }
+
+    /* ── AppBar ── */
+    .appbar {
+      flex-shrink: 0;
+      background: #e8f56e;
+      padding-top: 30px;
+      z-index: 5;
+    }
+
+    .appbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px 8px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0a0f2e;
+      letter-spacing: -0.5px;
+    }
+
+    .signout-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a0f2e;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.1s;
+    }
+    .signout-btn:hover { background: rgba(10,15,46,0.1); }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px 10px;
+    }
+
+    .search-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(10,15,46,0.15);
+      border-radius: 10px;
+      padding: 9px 12px 9px 34px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #0a0f2e;
+      outline: none;
+      height: 40px;
+    }
+    .search-input::placeholder { color: rgba(10,15,46,0.4); }
+    .search-input:focus { border-color: rgba(10,15,46,0.5); }
+
+    .filter-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(10,15,46,0.3);
+      background: rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.1s;
+    }
+    .filter-btn.active {
+      background: #0a0f2e;
+    }
+    .filter-btn.active svg { color: #e8f56e; }
+
+    .filter-dot {
+      position: absolute;
+      top: 7px; right: 7px;
+      width: 7px; height: 7px;
+      background: #e8f56e;
+      border-radius: 50%;
+      display: none;
+    }
+    .filter-btn.active .filter-dot { display: block; }
+
+    .clear-filter-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: #0a0f2e;
+      border: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .clear-filter-btn.visible { display: flex; }
+
+    /* ── Body ── */
+    .body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      position: relative;
+    }
+    .body::-webkit-scrollbar { display: none; }
+
+    /* ── Views ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── List rows ── */
+    .game-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .game-info { flex: 1; min-width: 0; }
+
+    .game-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .game-details {
+      font-size: 11px;
+      color: rgba(255,255,255,0.54);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .portable-badge {
+      flex-shrink: 0;
+      margin-left: 10px;
+      padding: 3px 7px;
+      background: rgba(232,245,110,0.12);
+      border: 1px solid rgba(232,245,110,0.3);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #e8f56e;
+    }
+
+    /* ── Skeleton rows ── */
+    .skeleton-row {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .skeleton-line {
+      background: rgba(255,255,255,0.09);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .skeleton-line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+      animation: shimmer 1.4s infinite;
+    }
+
+    /* ── Empty / error ── */
+    .center-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      gap: 0;
+    }
+
+    .empty-icon-box {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .empty-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.54);
+      max-width: 220px;
+      line-height: 1.6;
+    }
+
+    .error-box {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 24px 20px 0;
+    }
+    .error-box svg { flex-shrink: 0; margin-top: 1px; }
+    .error-box-text { font-size: 12px; color: #f87171; line-height: 1.5; }
+
+    .try-again {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: underline;
+      text-align: center;
+      display: block;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    /* ── Sheet overlay ── */
+    .sheet-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+    }
+    .sheet-overlay.hidden { display: none; }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+    }
+
+    .sheet-panel {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: #1e2130;
+      border-radius: 20px 20px 0 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom: none;
+      padding: 0 24px 36px;
+      display: none;
+      max-height: 88%;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .sheet-panel::-webkit-scrollbar { display: none; }
+    .sheet-panel.active { display: block; }
+
+    .drag-handle {
+      width: 36px; height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 16px auto 0;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      margin-bottom: 20px;
+    }
+
+    .sheet-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .sheet-close {
+      width: 28px; height: 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.5;
+      border-radius: 6px;
+      transition: opacity 0.1s, background 0.1s;
+    }
+    .sheet-close:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+
+    /* Filter form */
+    .form-field { margin-bottom: 14px; }
+
+    .form-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #13151f;
+      border: 1px solid rgba(255,255,255,0.125);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #ffffff;
+      outline: none;
+      caret-color: #e8f56e;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input::placeholder { color: #4b5563; }
+    .form-input:focus {
+      border-color: #e8f56e;
+      box-shadow: 0 0 0 1px #e8f56e;
+    }
+
+    /* Toggle group (portable) */
+    .toggle-group { display: flex; gap: 6px; }
+
+    .toggle-opt {
+      flex: 1;
+      padding: 9px 6px;
+      background: #13151f;
+      border: 1px solid rgba(255,255,255,0.125);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .toggle-opt:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); }
+    .toggle-opt.selected {
+      background: #e8f56e;
+      border-color: #e8f56e;
+      color: #0a0f2e;
+      font-weight: 700;
+    }
+
+    /* Sheet action buttons */
+    .sheet-btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-outline {
+      flex: 1;
+      padding: 13px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.06); }
+
+    .btn-primary {
+      flex: 1;
+      background: #e8f56e;
+      color: #0a0f2e;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #f0f8a0; }
+
+    /* ── Proto bar ── */
+    .proto-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 10px 14px;
+      align-items: center;
+    }
+
+    .proto-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+    .proto-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      align-self: center;
+      padding: 0 4px;
+    }
+
+    .proto-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #aaa;
+      transition: all 0.15s;
+    }
+    .proto-btn.active, .proto-btn:hover {
+      background: #e8f56e;
+      color: #0a0f2e;
+    }
+  </style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+
+    <!-- AppBar -->
+    <div class="appbar">
+      <div class="appbar-row">
+        <span class="app-title">GNOrg</span>
+        <button class="signout-btn">Sign out</button>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="#0a0f2e" stroke-width="1.5"/>
+            <path d="M11 11l2.5 2.5" stroke="#0a0f2e" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input class="search-input" type="text" placeholder="Search games…" id="searchInput" />
+        </div>
+        <div class="filter-btn" id="filterBtn" onclick="openSheet()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 5h14M5 9h8M8 13h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div class="filter-dot"></div>
+        </div>
+        <button class="clear-filter-btn" id="clearFilterBtn" onclick="clearFilters()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 2l10 10M12 2L2 12" stroke="#e8f56e" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body" id="bodyEl">
+
+      <!-- View: Populated list -->
+      <div id="view-populated" class="view active">
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Catan</p>
+            <p class="game-details">3–6  —  Strategy · Resource</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Ticket to Ride</p>
+            <p class="game-details">2–5  —  Strategy · Route</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Love Letter</p>
+            <p class="game-details">2–6  —  Card · Social</p>
+          </div>
+          <span class="portable-badge">✦</span>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Pandemic</p>
+            <p class="game-details">2–4  —  Strategy · Coop</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Splendor</p>
+            <p class="game-details">2–4  —  Strategy · Engine</p>
+          </div>
+          <span class="portable-badge">✦</span>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Dominion</p>
+            <p class="game-details">2–4  —  Card · Deck Building</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">7 Wonders</p>
+            <p class="game-details">2–7  —  Strategy · Drafting</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Coup</p>
+            <p class="game-details">2–6  —  Card · Bluffing</p>
+          </div>
+          <span class="portable-badge">✦</span>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Azul</p>
+            <p class="game-details">2–4  —  Abstract · Tile</p>
+          </div>
+        </div>
+        <div class="game-row">
+          <div class="game-info">
+            <p class="game-name">Wingspan</p>
+            <p class="game-details">1–5  —  Strategy · Engine</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Loading skeleton -->
+      <div id="view-loading" class="view">
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:110px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:160px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:150px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:130px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:90px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:170px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:130px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:120px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:80px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:150px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:120px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:140px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:100px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:160px;"></div>
+        </div>
+        <div class="skeleton-row">
+          <div class="skeleton-line" style="height:13px; width:140px; margin-bottom:7px;"></div>
+          <div class="skeleton-line" style="height:10px; width:110px;"></div>
+        </div>
+      </div>
+
+      <!-- View: Empty -->
+      <div id="view-empty" class="view">
+        <div class="center-state">
+          <div class="empty-icon-box">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="3" y="3" width="9" height="9" rx="2" stroke="white" stroke-width="1.5" stroke-opacity="0.38"/>
+              <rect x="16" y="3" width="9" height="9" rx="2" stroke="white" stroke-width="1.5" stroke-opacity="0.38"/>
+              <rect x="3" y="16" width="9" height="9" rx="2" stroke="white" stroke-width="1.5" stroke-opacity="0.38"/>
+              <rect x="16" y="16" width="9" height="9" rx="2" stroke="white" stroke-width="1.5" stroke-opacity="0.38"/>
+            </svg>
+          </div>
+          <p class="empty-title">No games yet</p>
+          <p class="empty-sub">Add games on the web to see them here.</p>
+        </div>
+      </div>
+
+      <!-- View: No results -->
+      <div id="view-noresults" class="view">
+        <div class="center-state">
+          <div class="empty-icon-box">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="13" cy="13" r="9" stroke="white" stroke-width="1.5" stroke-opacity="0.38"/>
+              <path d="M20 20l4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.38"/>
+            </svg>
+          </div>
+          <p class="empty-title">No games found</p>
+          <p class="empty-sub">Try adjusting your search or filters.</p>
+        </div>
+      </div>
+
+      <!-- View: Error -->
+      <div id="view-error" class="view">
+        <div class="error-box">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#f87171" stroke-width="1.4"/>
+            <path d="M8 5v4M8 11v.5" stroke="#f87171" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span class="error-box-text">Could not load games. Please try again.</span>
+        </div>
+        <span class="try-again">Try again</span>
+      </div>
+
+    </div><!-- /body -->
+
+    <!-- Filter sheet overlay -->
+    <div class="sheet-overlay hidden" id="sheetOverlay">
+      <div class="sheet-backdrop" onclick="closeSheet()"></div>
+      <div class="sheet-panel active" id="sheet-filter">
+        <div class="drag-handle"></div>
+        <div class="sheet-header">
+          <span class="sheet-title">Filter Games</span>
+          <button class="sheet-close" onclick="closeSheet()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 2l12 12M14 2L2 14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Player count</label>
+          <input class="form-input" type="number" placeholder="4" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Genre</label>
+          <input class="form-input" type="text" placeholder="Strategy" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Portable</label>
+          <div class="toggle-group" id="filter-portable">
+            <div class="toggle-opt selected" onclick="selectToggle('filter-portable', this)">Any</div>
+            <div class="toggle-opt" onclick="selectToggle('filter-portable', this)">Yes</div>
+            <div class="toggle-opt" onclick="selectToggle('filter-portable', this)">No</div>
+          </div>
+        </div>
+
+        <div class="sheet-btn-row">
+          <button class="btn-outline" onclick="resetFilters()">Reset</button>
+          <button class="btn-primary" onclick="applyFilters()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screen -->
+</div><!-- /phone -->
+
+<!-- Prototype controls -->
+<div class="proto-bar">
+  <div class="proto-row">
+    <span class="proto-label">View</span>
+    <button class="proto-btn active" onclick="setView('populated', this)">Populated</button>
+    <button class="proto-btn" onclick="setView('loading', this)">Loading</button>
+    <button class="proto-btn" onclick="setView('empty', this)">Empty</button>
+    <button class="proto-btn" onclick="setView('noresults', this)">No Results</button>
+    <button class="proto-btn" onclick="setView('error', this)">Error</button>
+  </div>
+</div>
+
+<script>
+  let currentView = 'populated';
+
+  function setView(name, el) {
+    closeSheet();
+    document.getElementById('view-' + currentView).classList.remove('active');
+    currentView = name;
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.proto-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  function openSheet() {
+    document.getElementById('sheetOverlay').classList.remove('hidden');
+  }
+
+  function closeSheet() {
+    document.getElementById('sheetOverlay').classList.add('hidden');
+  }
+
+  function selectToggle(groupId, el) {
+    document.querySelectorAll('#' + groupId + ' .toggle-opt')
+      .forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function applyFilters() {
+    closeSheet();
+    document.getElementById('filterBtn').classList.add('active');
+    document.getElementById('clearFilterBtn').classList.add('visible');
+    // Demo: show no-results to illustrate filtered state
+    setView('noresults', null);
+    document.querySelectorAll('.proto-btn')
+      .forEach(b => b.classList.toggle('active', b.textContent.trim() === 'No Results'));
+  }
+
+  function resetFilters() {
+    closeSheet();
+    clearFilters();
+  }
+
+  function clearFilters() {
+    document.getElementById('filterBtn').classList.remove('active');
+    document.getElementById('clearFilterBtn').classList.remove('visible');
+    // Reset portable toggle
+    document.querySelectorAll('#filter-portable .toggle-opt')
+      .forEach(o => o.classList.remove('selected'));
+    document.querySelector('#filter-portable .toggle-opt').classList.add('selected');
+  }
+</script>
+
+</body>
+</html>

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:gnorg_mobile/services/games_service.dart';
+import 'package:gnorg_mobile/services/game_service.dart';
 
 void main() {
   setUp(() {
@@ -21,31 +21,31 @@ void main() {
           headers: {'content-type': 'application/json'},
         ));
 
-    final result = await GamesService.getGames(httpClient: client);
+    final result = await GameService.getGames(httpClient: client);
 
-    expect(result.unauthorized, isFalse);
-    expect(result.games, isNotNull);
-    expect(result.games!.length, equals(2));
-    expect(result.games![0].name, equals('Chess'));
-    expect(result.games![1].name, equals('Catan'));
+    expect(result.length, equals(2));
+    expect(result[0].name, equals('Chess'));
+    expect(result[1].name, equals('Catan'));
   });
 
   test('returns empty list on 404 (no games matched)', () async {
     final client = MockClient((_) async => http.Response('', 404));
 
-    final result = await GamesService.getGames(httpClient: client);
+    final result = await GameService.getGames(httpClient: client);
 
-    expect(result.unauthorized, isFalse);
-    expect(result.games, isEmpty);
+    expect(result, isEmpty);
   });
 
-  test('returns unauthorized:true and clears token on 401', () async {
+  test('throws UnauthorizedException and clears token on 401', () async {
     final client = MockClient((_) async => http.Response('', 401));
 
-    final result = await GamesService.getGames(httpClient: client);
+    try {
+      await GameService.getGames(httpClient: client);
+      fail('expected UnauthorizedException');
+    } on UnauthorizedException {
+      // expected
+    }
 
-    expect(result.unauthorized, isTrue);
-    expect(result.games, isNull);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('token'), isNull);
   });
@@ -57,7 +57,7 @@ void main() {
       return http.Response(jsonEncode([]), 404);
     });
 
-    await GamesService.getGames(httpClient: client);
+    await GameService.getGames(httpClient: client);
 
     expect(capturedAuthHeader, equals('Bearer stored-token'));
   });
@@ -73,7 +73,7 @@ void main() {
       );
     });
 
-    await GamesService.getGames(name: 'Chess', httpClient: client);
+    await GameService.getGames(name: 'Chess', httpClient: client);
 
     final body = jsonDecode(capturedBody!) as Map<String, dynamic>;
     expect(body['name'], equals('Chess'));
@@ -89,18 +89,18 @@ void main() {
           },
         ));
 
-    await GamesService.getGames(httpClient: client);
+    await GameService.getGames(httpClient: client);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('token'), equals('new-refreshed-token'));
   });
 
-  test('returns empty list on unexpected server error', () async {
+  test('throws exception on unexpected server error', () async {
     final client = MockClient((_) async => http.Response('', 500));
 
-    final result = await GamesService.getGames(httpClient: client);
-
-    expect(result.unauthorized, isFalse);
-    expect(result.games, isEmpty);
+    expect(
+      () => GameService.getGames(httpClient: client),
+      throwsException,
+    );
   });
 }

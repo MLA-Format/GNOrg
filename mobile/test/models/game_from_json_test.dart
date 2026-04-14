@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gnorg_mobile/models/game.dart';
+import 'package:gnorg_mobile/services/game_service.dart';
 
 void main() {
   test('parses a full game object', () {
@@ -18,8 +18,8 @@ void main() {
     expect(game.name, equals('Catan'));
     expect(game.players?.min, equals(3));
     expect(game.players?.max, equals(6));
-    expect(game.genreCategory, equals('Strategy'));
-    expect(game.genreType, equals('Eurogame'));
+    expect(game.genre.category, equals('Strategy'));
+    expect(game.genre.type, equals('Eurogame'));
     expect(game.portable, isFalse);
     expect(game.coverImage, equals('http://example.com/catan.jpg'));
   });
@@ -32,8 +32,8 @@ void main() {
     expect(game.id, equals('xyz'));
     expect(game.name, equals('Chess'));
     expect(game.players, isNull);
-    expect(game.genreCategory, isNull);
-    expect(game.genreType, isNull);
+    expect(game.genre.category, isNull);
+    expect(game.genre.type, isNull);
     expect(game.portable, isNull);
     expect(game.coverImage, isNull);
   });

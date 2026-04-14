@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../services/game_service.dart';
 import '../theme.dart';
@@ -9,10 +7,8 @@ import '../widgets/auth_shell.dart';
 
 // ─── Dashboard page ────────────────────────────────────────────────────────────
 
-/// Main game-collection dashboard — Flutter port of `web/src/pages/UserDash.tsx`.
-///
-/// Auth-guards on mount. Loads games from the API. Add/edit/delete/filter via
-/// bottom sheets. Image upload via `image_picker`.
+/// Read-only game-collection dashboard. Add / edit / delete are web-only.
+/// Supports search and filter via the AppBar and a bottom sheet.
 class DashboardPage extends StatefulWidget {
   final VoidCallback onSignOut;
 
@@ -88,54 +84,22 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _handleUnauthorized() => widget.onSignOut();
+  // ── Sheets ─────────────────────────────────────────────────────────────────
 
-  // ── Bottom sheets ──────────────────────────────────────────────────────────
-
-  void _openSheet(Widget sheet) {
+  void _showFilter() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => sheet,
+      builder: (_) => _FilterSheet(
+        filters: _filters,
+        onApply: (f) {
+          Navigator.pop(context);
+          setState(() => _filters = f);
+          _loadGames();
+        },
+      ),
     );
-  }
-
-  void _showGameAction(Game game) {
-    _openSheet(_ActionSheet(
-      game: game,
-      onEdit: () {
-        Navigator.pop(context);
-        _showGameForm(initial: game);
-      },
-      onDeleted: () {
-        Navigator.pop(context);
-        _loadGames();
-      },
-      onUnauthorized: _handleUnauthorized,
-    ));
-  }
-
-  void _showGameForm({Game? initial}) {
-    _openSheet(_GameFormSheet(
-      initial: initial,
-      onSaved: () {
-        Navigator.pop(context);
-        _loadGames();
-      },
-      onUnauthorized: _handleUnauthorized,
-    ));
-  }
-
-  void _showFilter() {
-    _openSheet(_FilterSheet(
-      filters: _filters,
-      onApply: (f) {
-        Navigator.pop(context);
-        setState(() => _filters = f);
-        _loadGames();
-      },
-    ));
   }
 
   // ── Sign out ───────────────────────────────────────────────────────────────
@@ -155,13 +119,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasFilters = !_filters.isEmpty;
-
     return Scaffold(
       backgroundColor: AppColors.navy,
       appBar: _DashAppBar(
         searchCtrl: _searchCtrl,
-        hasFilters: hasFilters,
+        hasFilters: !_filters.isEmpty,
         onFilter: _showFilter,
         onResetFilter: () {
           setState(() => _filters = const _Filters());
@@ -169,18 +131,12 @@ class _DashboardPageState extends State<DashboardPage> {
         },
         onSignOut: _signOut,
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.lime,
-        foregroundColor: AppColors.navy,
-        onPressed: () => _showGameForm(),
-        child: const Icon(Icons.add),
-      ),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (!_loaded) return _SkeletonGrid();
+    if (!_loaded) return const _SkeletonList();
 
     if (_fetchError.isNotEmpty) {
       return Center(
@@ -233,23 +189,10 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               _hasAnyGames == true
                   ? 'Try adjusting your search or filters.'
-                  : 'Add your first game to get started.',
+                  : 'Add games on the web to see them here.',
               style: GoogleFonts.jetBrainsMono(fontSize: 12, color: Colors.white54),
               textAlign: TextAlign.center,
             ),
-            if (_hasAnyGames != true) ...[
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => _showGameForm(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.lime,
-                  foregroundColor: AppColors.navy,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: Text('Add game',
-                    style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.w700)),
-              ),
-            ],
           ],
         ),
       );
@@ -258,19 +201,10 @@ class _DashboardPageState extends State<DashboardPage> {
     return RefreshIndicator(
       color: AppColors.lime,
       onRefresh: _loadGames,
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.72,
-        ),
+      child: ListView.builder(
+        padding: EdgeInsets.zero,
         itemCount: _games.length,
-        itemBuilder: (_, i) => _GameCard(
-          game: _games[i],
-          onTap: () => _showGameAction(_games[i]),
-        ),
+        itemBuilder: (_, i) => _GameListTile(game: _games[i]),
       ),
     );
   }
@@ -301,13 +235,16 @@ class _DashAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppColors.lime,
       elevation: 0,
-      titleSpacing: 16,
-      title: Text(
-        'GNOrg',
-        style: GoogleFonts.jetBrainsMono(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.navy,
+      titleSpacing: 0,
+      title: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          'GNOrg',
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
         ),
       ),
       actions: [
@@ -325,56 +262,63 @@ class _DashAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(56),
-        child: Container(
-          color: AppColors.lime,
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: searchCtrl,
-                  style: GoogleFonts.jetBrainsMono(fontSize: 13, color: AppColors.navy),
-                  cursorColor: AppColors.navy,
-                  decoration: InputDecoration(
-                    hintText: 'Search games…',
-                    hintStyle: GoogleFonts.jetBrainsMono(
-                        fontSize: 13, color: AppColors.navy.withOpacity(0.4)),
-                    prefixIcon: Icon(Icons.search, size: 18, color: AppColors.navy.withOpacity(0.5)),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.6),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColors.navy.withOpacity(0.2)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColors.navy.withOpacity(0.5)),
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.navy.withOpacity(0.15)),
+                  ),
+                  child: TextField(
+                    controller: searchCtrl,
+                    style: GoogleFonts.jetBrainsMono(
+                        fontSize: 13, color: AppColors.navy),
+                    cursorColor: AppColors.navy,
+                    decoration: InputDecoration(
+                      hintText: 'Search games…',
+                      hintStyle: GoogleFonts.jetBrainsMono(
+                          fontSize: 13,
+                          color: AppColors.navy.withOpacity(0.4)),
+                      prefixIcon: Icon(Icons.search,
+                          size: 18, color: AppColors.navy.withOpacity(0.4)),
+                      border: InputBorder.none,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 10),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              // Filter button
               GestureDetector(
                 onTap: onFilter,
                 child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: hasFilters ? AppColors.navy : Colors.white.withOpacity(0.6),
+                    color: hasFilters
+                        ? AppColors.navy
+                        : Colors.white.withOpacity(0.6),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.navy.withOpacity(0.3)),
+                    border: Border.all(
+                        color: AppColors.navy.withOpacity(0.3)),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Icon(Icons.tune,
-                          size: 18, color: hasFilters ? AppColors.lime : AppColors.navy),
+                          size: 18,
+                          color: hasFilters
+                              ? AppColors.lime
+                              : AppColors.navy.withOpacity(0.7)),
                       if (hasFilters)
                         Positioned(
-                          top: 6,
-                          right: 6,
+                          top: 7,
+                          right: 7,
                           child: Container(
                             width: 7,
                             height: 7,
@@ -399,7 +343,8 @@ class _DashAppBar extends StatelessWidget implements PreferredSizeWidget {
                       color: AppColors.navy,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.close, size: 16, color: AppColors.lime),
+                    child: const Icon(Icons.close,
+                        size: 16, color: AppColors.lime),
                   ),
                 ),
               ],
@@ -411,192 +356,132 @@ class _DashAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-// ─── Game Card ─────────────────────────────────────────────────────────────────
+// ─── Game list tile ────────────────────────────────────────────────────────────
 
-class _GameCard extends StatelessWidget {
+class _GameListTile extends StatelessWidget {
   final Game game;
-  final VoidCallback onTap;
 
-  const _GameCard({required this.game, required this.onTap});
+  const _GameListTile({required this.game});
 
   @override
   Widget build(BuildContext context) {
-    final playerLabel = game.playerLabel;
-    final genreLabel = [game.genre.category, game.genre.type]
-        .where((s) => s != null && s.isNotEmpty)
+    final details = <String>[];
+    if (game.playerLabel.isNotEmpty) details.add(game.playerLabel);
+    final genre = [game.genre.category, game.genre.type]
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
         .join(' · ');
+    if (genre.isNotEmpty) details.add(genre);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.navy.withOpacity(0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.07)),
         ),
-        clipBehavior: Clip.hardEdge,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Cover image
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [
-                  SizedBox.expand(
-                    child: game.coverImage != null
-                        ? Image.network(
-                            game.coverImage!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _PlaceholderCover(),
-                          )
-                        : _PlaceholderCover(),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  game.name,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
-                  // Options button
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: GestureDetector(
-                      onTap: onTap,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: AppColors.navy.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white.withOpacity(0.15)),
-                        ),
-                        child: const Icon(Icons.more_vert, size: 16, color: Colors.white),
-                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (details.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    details.join('  —  '),
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 11,
+                      color: Colors.white54,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
+              ],
             ),
-            // Info
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      game.name,
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.navy,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        if (playerLabel.isNotEmpty) _Chip(label: playerLabel),
-                        if (game.portable != null)
-                          _Chip(
-                            label: game.portable! ? '✦ Portable' : 'Not portable',
-                            filled: game.portable!,
-                          ),
-                      ],
-                    ),
-                    if (genreLabel.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          genreLabel,
-                          style: GoogleFonts.jetBrainsMono(
-                              fontSize: 9, color: AppColors.navy.withOpacity(0.5)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
+          ),
+          if (game.portable == true) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.lime.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                    color: AppColors.lime.withOpacity(0.3)),
+              ),
+              child: Text(
+                '✦',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.lime,
                 ),
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 }
 
-class _PlaceholderCover extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-        color: AppColors.lime.withOpacity(0.2),
-        child: const Center(
-          child: Icon(Icons.grid_view_rounded, size: 32, color: Colors.black12),
-        ),
-      );
-}
+// ─── Skeleton list ─────────────────────────────────────────────────────────────
 
-class _Chip extends StatelessWidget {
-  final String label;
-  final bool filled;
-
-  const _Chip({required this.label, this.filled = false});
+class _SkeletonList extends StatelessWidget {
+  const _SkeletonList();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: filled ? AppColors.navy : AppColors.navy.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: filled ? AppColors.navy : AppColors.navy.withOpacity(0.12),
-        ),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.jetBrainsMono(
-          fontSize: 9,
-          fontWeight: FontWeight.w500,
-          color: filled ? AppColors.lime : AppColors.navy,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Skeleton ──────────────────────────────────────────────────────────────────
-
-class _SkeletonGrid extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
-      ),
-      itemCount: 8,
-      itemBuilder: (_, __) => Container(
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: 10,
+      itemBuilder: (_, i) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
+          border: Border(
+            bottom: BorderSide(color: Colors.white.withOpacity(0.07)),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 13,
+              width: 100.0 + (i % 3) * 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Container(
+              height: 10,
+              width: 140.0 + (i % 2) * 30,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ─── Bottom sheet helpers ──────────────────────────────────────────────────────
+// ─── Bottom sheet shell ────────────────────────────────────────────────────────
 
 class _SheetShell extends StatelessWidget {
   final String title;
@@ -621,7 +506,6 @@ class _SheetShell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
           Center(
             child: Container(
               width: 36,
@@ -654,597 +538,6 @@ class _SheetShell extends StatelessWidget {
           child,
         ],
       ),
-    );
-  }
-}
-
-// ─── Action sheet ──────────────────────────────────────────────────────────────
-
-class _ActionSheet extends StatefulWidget {
-  final Game game;
-  final VoidCallback onEdit;
-  final VoidCallback onDeleted;
-  final VoidCallback onUnauthorized;
-
-  const _ActionSheet({
-    required this.game,
-    required this.onEdit,
-    required this.onDeleted,
-    required this.onUnauthorized,
-  });
-
-  @override
-  State<_ActionSheet> createState() => _ActionSheetState();
-}
-
-class _ActionSheetState extends State<_ActionSheet> {
-  bool _confirming = false;
-  bool _deleting = false;
-  String _error = '';
-
-  Future<void> _handleDelete() async {
-    setState(() { _deleting = true; _error = ''; });
-    final err = await GameService.deleteGame(widget.game.name);
-    if (!mounted) return;
-    setState(() => _deleting = false);
-    if (err == '__unauthorized__') { widget.onUnauthorized(); return; }
-    if (err != null) { setState(() => _error = err); return; }
-    widget.onDeleted();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _SheetShell(
-      title: widget.game.name,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SheetButton(
-            icon: Icons.edit_outlined,
-            label: 'Edit game',
-            iconColor: AppColors.lime,
-            onTap: widget.onEdit,
-          ),
-          const SizedBox(height: 8),
-
-          if (!_confirming)
-            _SheetButton(
-              icon: Icons.delete_outline,
-              label: 'Delete game',
-              iconColor: const Color(0xFFF87171),
-              textColor: const Color(0xFFF87171),
-              onTap: () => setState(() => _confirming = true),
-            )
-          else ...[
-            Text(
-              'Are you sure? This cannot be undone.',
-              style: GoogleFonts.jetBrainsMono(fontSize: 11, color: Colors.white54),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => setState(() => _confirming = false),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white24),
-                      foregroundColor: Colors.white70,
-                    ),
-                    child: Text('Cancel',
-                        style: GoogleFonts.jetBrainsMono(fontSize: 12)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _deleting ? null : _handleDelete,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF87171).withOpacity(0.2),
-                      foregroundColor: const Color(0xFFF87171),
-                    ),
-                    child: Text(
-                      _deleting ? 'Deleting…' : 'Yes, delete',
-                      style: GoogleFonts.jetBrainsMono(
-                          fontSize: 12, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          if (_error.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ErrorBanner(message: _error),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SheetButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-  final Color textColor;
-  final VoidCallback onTap;
-
-  const _SheetButton({
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    this.textColor = Colors.white,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.inputDark,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor, size: 18),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: GoogleFonts.jetBrainsMono(fontSize: 13, color: textColor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Game form sheet (add / edit) ─────────────────────────────────────────────
-
-class _GameFormSheet extends StatefulWidget {
-  final Game? initial;
-  final VoidCallback onSaved;
-  final VoidCallback onUnauthorized;
-
-  const _GameFormSheet({
-    this.initial,
-    required this.onSaved,
-    required this.onUnauthorized,
-  });
-
-  @override
-  State<_GameFormSheet> createState() => _GameFormSheetState();
-}
-
-class _GameFormSheetState extends State<_GameFormSheet> {
-  late final TextEditingController _nameCtrl;
-  late final TextEditingController _minCtrl;
-  late final TextEditingController _maxCtrl;
-  late final TextEditingController _exactCtrl;
-  late final TextEditingController _genreCatCtrl;
-  late final TextEditingController _genreTypeCtrl;
-
-  String _portable = '';
-  String _coverImage = '';
-  bool _uploading = false;
-  bool _saving = false;
-  String _error = '';
-
-  @override
-  void initState() {
-    super.initState();
-    final g = widget.initial;
-    _nameCtrl = TextEditingController(text: g?.name ?? '');
-    _minCtrl = TextEditingController(text: g?.players?.min?.toString() ?? '');
-    _maxCtrl = TextEditingController(text: g?.players?.max?.toString() ?? '');
-    _exactCtrl = TextEditingController(
-        text: g?.players?.exact?.join(', ') ?? '');
-    _genreCatCtrl = TextEditingController(text: g?.genre.category ?? '');
-    _genreTypeCtrl = TextEditingController(text: g?.genre.type ?? '');
-    _portable = g?.portable == null ? '' : g!.portable! ? 'true' : 'false';
-    _coverImage = g?.coverImage ?? '';
-  }
-
-  @override
-  void dispose() {
-    for (final c in [
-      _nameCtrl, _minCtrl, _maxCtrl, _exactCtrl, _genreCatCtrl, _genreTypeCtrl
-    ]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  List<int> _parseExact(String raw) =>
-      raw.split(',').map((s) => int.tryParse(s.trim())).whereType<int>().toList();
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked == null || !mounted) return;
-
-    setState(() { _uploading = true; _error = ''; });
-    final url = await GameService.uploadImage(
-      File(picked.path),
-      onError: (e) { if (mounted) setState(() => _error = e); },
-    );
-    if (!mounted) return;
-    setState(() {
-      _uploading = false;
-      if (url != null) _coverImage = url;
-    });
-  }
-
-  Future<void> _handleSubmit() async {
-    if (_nameCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'Name is required');
-      return;
-    }
-
-    final exact = _parseExact(_exactCtrl.text);
-    final players = <String, dynamic>{};
-    if (_minCtrl.text.isNotEmpty) players['min'] = int.tryParse(_minCtrl.text);
-    if (_maxCtrl.text.isNotEmpty) players['max'] = int.tryParse(_maxCtrl.text);
-    if (exact.isNotEmpty) players['exact'] = exact;
-
-    final payload = <String, dynamic>{
-      'name': _nameCtrl.text.trim(),
-      'players': players.isEmpty ? null : players,
-      'genre': {
-        'category': _genreCatCtrl.text.trim().isEmpty ? null : _genreCatCtrl.text.trim(),
-        'type': _genreTypeCtrl.text.trim().isEmpty ? null : _genreTypeCtrl.text.trim(),
-      },
-      'portable': _portable.isEmpty ? null : _portable == 'true',
-      'coverImage': _coverImage.isEmpty ? null : _coverImage,
-    };
-
-    setState(() { _saving = true; _error = ''; });
-    String? err;
-    if (widget.initial != null) {
-      payload['id'] = widget.initial!.id;
-      err = await GameService.editGame(payload);
-    } else {
-      err = await GameService.createGame(payload);
-    }
-    if (!mounted) return;
-    setState(() => _saving = false);
-
-    if (err == '__unauthorized__') { widget.onUnauthorized(); return; }
-    if (err != null) { setState(() => _error = err!); return; }
-    widget.onSaved();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isEdit = widget.initial != null;
-
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      builder: (_, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // Handle + header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              child: Column(
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isEdit ? 'Edit Game' : 'Add Game',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close, color: Colors.white54, size: 20),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Scrollable fields
-            Expanded(
-              child: ListView(
-                controller: scrollCtrl,
-                padding: EdgeInsets.fromLTRB(
-                  24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-                children: [
-                  _FormField(label: 'Name *', controller: _nameCtrl, placeholder: 'Catan', maxLength: 100),
-                  const SizedBox(height: 14),
-
-                  Row(children: [
-                    Expanded(child: _FormField(
-                        label: 'Players min',
-                        controller: _minCtrl,
-                        placeholder: '1',
-                        keyboardType: TextInputType.number)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _FormField(
-                        label: 'Players max',
-                        controller: _maxCtrl,
-                        placeholder: '4',
-                        keyboardType: TextInputType.number)),
-                  ]),
-                  const SizedBox(height: 14),
-
-                  _FormField(
-                    label: 'Exact counts (e.g. 2, 4, 8)',
-                    controller: _exactCtrl,
-                    placeholder: '2, 4, 8',
-                    maxLength: 100,
-                  ),
-                  const SizedBox(height: 14),
-
-                  Row(children: [
-                    Expanded(child: _FormField(
-                        label: 'Genre', controller: _genreCatCtrl, placeholder: 'Strategy', maxLength: 50)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _FormField(
-                        label: 'Game type', controller: _genreTypeCtrl, placeholder: 'Eurogame', maxLength: 50)),
-                  ]),
-                  const SizedBox(height: 14),
-
-                  // Portable dropdown
-                  _DropdownField(
-                    label: 'Portable',
-                    value: _portable,
-                    items: const [
-                      DropdownMenuItem(value: '', child: Text('— select —')),
-                      DropdownMenuItem(value: 'true', child: Text('Yes')),
-                      DropdownMenuItem(value: 'false', child: Text('No')),
-                    ],
-                    onChanged: (v) => setState(() => _portable = v ?? ''),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Cover image
-                  _CoverImageField(
-                    coverImage: _coverImage,
-                    uploading: _uploading,
-                    onPick: _pickImage,
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (_error.isNotEmpty) ...[
-                    ErrorBanner(message: _error),
-                    const SizedBox(height: 14),
-                  ],
-
-                  AuthButton(
-                    label: _saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add game',
-                    onPressed: (_saving || _uploading) ? null : _handleSubmit,
-                    loading: _saving,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Form sub-widgets ─────────────────────────────────────────────────────────
-
-class _FormField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final String placeholder;
-  final TextInputType keyboardType;
-  final int? maxLength;
-
-  const _FormField({
-    required this.label,
-    required this.controller,
-    this.placeholder = '',
-    this.keyboardType = TextInputType.text,
-    this.maxLength,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF9CA3AF),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLength: maxLength,
-          buildCounter: maxLength != null
-              ? (_, {required currentLength, required isFocused, maxLength}) => null
-              : null,
-          style: GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white),
-          cursorColor: AppColors.lime,
-          decoration: InputDecoration(
-            hintText: placeholder,
-            hintStyle: GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white24),
-            filled: true,
-            fillColor: AppColors.inputDark,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.lime, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DropdownField extends StatelessWidget {
-  final String label;
-  final String value;
-  final List<DropdownMenuItem<String>> items;
-  final ValueChanged<String?> onChanged;
-
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF9CA3AF),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          value: value,
-          items: items,
-          onChanged: onChanged,
-          dropdownColor: AppColors.cardDark,
-          style: GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputDark,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.12)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.lime, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CoverImageField extends StatelessWidget {
-  final String coverImage;
-  final bool uploading;
-  final VoidCallback onPick;
-
-  const _CoverImageField({
-    required this.coverImage,
-    required this.uploading,
-    required this.onPick,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          'COVER IMAGE',
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF9CA3AF),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 6),
-        if (coverImage.isNotEmpty)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              coverImage,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
-        if (coverImage.isNotEmpty) const SizedBox(height: 8),
-        GestureDetector(
-          onTap: uploading ? null : onPick,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: AppColors.inputDark,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.lime.withOpacity(0.3),
-                style: BorderStyle.solid,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  uploading ? Icons.hourglass_empty : Icons.upload_rounded,
-                  size: 16,
-                  color: AppColors.lime.withOpacity(0.7),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  uploading
-                      ? 'Uploading…'
-                      : coverImage.isNotEmpty
-                          ? 'Replace image'
-                          : 'Upload image',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 12,
-                    color: AppColors.lime.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1304,20 +597,20 @@ class _FilterSheetState extends State<_FilterSheet> {
       title: 'Filter Games',
       child: Column(
         children: [
-          _FormField(
+          _FilterTextField(
             label: 'Player count',
             controller: _playerCtrl,
             placeholder: '4',
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 14),
-          _FormField(
+          _FilterTextField(
             label: 'Genre',
             controller: _genreCtrl,
             placeholder: 'Strategy',
           ),
           const SizedBox(height: 14),
-          _DropdownField(
+          _FilterDropdown(
             label: 'Portable',
             value: _portable,
             items: const [
@@ -1362,6 +655,123 @@ class _FilterSheetState extends State<_FilterSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Filter form widgets ───────────────────────────────────────────────────────
+
+class _FilterTextField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String placeholder;
+  final TextInputType keyboardType;
+
+  const _FilterTextField({
+    required this.label,
+    required this.controller,
+    this.placeholder = '',
+    this.keyboardType = TextInputType.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF9CA3AF),
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white),
+          cursorColor: AppColors.lime,
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: GoogleFonts.jetBrainsMono(
+                fontSize: 13, color: Colors.white24),
+            filled: true,
+            fillColor: AppColors.inputDark,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  BorderSide(color: Colors.white.withOpacity(0.12)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: AppColors.lime, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterDropdown extends StatelessWidget {
+  final String label;
+  final String value;
+  final List<DropdownMenuItem<String>> items;
+  final ValueChanged<String?> onChanged;
+
+  const _FilterDropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF9CA3AF),
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          dropdownColor: AppColors.cardDark,
+          style:
+              GoogleFonts.jetBrainsMono(fontSize: 13, color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.inputDark,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  BorderSide(color: Colors.white.withOpacity(0.12)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: AppColors.lime, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

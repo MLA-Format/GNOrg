@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GNOrg — Login (Mobile Prototype)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    /* ── Phone shell ── */
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 44px;
+      border: 10px solid #2a2a3e;
+      box-shadow:
+        0 0 0 1px #3a3a5e,
+        0 40px 80px rgba(0,0,0,0.7),
+        inset 0 0 0 1px #1a1a2e;
+      overflow: hidden;
+      position: relative;
+      background: #0a0f2e;
+    }
+
+    /* Notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 30px;
+      background: #2a2a3e;
+      border-radius: 0 0 20px 20px;
+      z-index: 10;
+    }
+
+    /* ── Screen ── */
+    .screen {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+
+      /* Diagonal gradient: lime → … → navy — mirrors auth_shell.dart AuthBackground */
+      background: linear-gradient(
+        120deg,
+        #e8f56e 0%,
+        #e8f56e 70%,
+        #f0f8a0 70%,
+        #f0f8a0 72%,
+        #f7fcd0 72%,
+        #f7fcd0 74%,
+        #ffffff 74%,
+        #ffffff 76%,
+        #c0c8d8 76%,
+        #c0c8d8 78%,
+        #7080a0 78%,
+        #7080a0 80%,
+        #0a0f2e 80%,
+        #0a0f2e 100%
+      );
+    }
+
+    /* ── Auth card ── */
+    .card-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      /* Shift left so card sits in the lime zone, matching alignment: Alignment(-0.4, 0) */
+      justify-content: flex-start;
+      padding: 32px 16px;
+      padding-top: 48px; /* clear the notch */
+      overflow-y: auto;
+    }
+
+    .card {
+      background: #1e2130;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 310px;
+    }
+
+    /* Logo box */
+    .logo-box {
+      width: 40px;
+      height: 40px;
+      background: #2a2d3e;
+      border: 1px solid rgba(255,255,255,0.125);
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-box svg { opacity: 0.6; }
+
+    /* Titles */
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #d1d5db;
+      margin-bottom: 24px;
+    }
+
+    /* Label */
+    .field-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #d1d5db;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* Password row label */
+    .pw-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .forgot-link {
+      font-size: 11px;
+      color: #e8f56e;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Input */
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: #13151f;
+      border: 1px solid rgba(255,255,255,0.125);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #ffffff;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      caret-color: #e8f56e;
+    }
+
+    input::placeholder { color: #4b5563; }
+
+    input:focus {
+      border-color: #e8f56e;
+      box-shadow: 0 0 0 1px #e8f56e;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    /* Submit button */
+    .btn-primary {
+      width: 100%;
+      background: #e8f56e;
+      color: #0a0f2e;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover  { background: #f0f8a0; }
+    .btn-primary:active { background: #d4e050; }
+
+    /* Footer link */
+    .footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 11px;
+      color: #d1d5db;
+    }
+
+    .footer-link a {
+      color: #e8f56e;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-link a:hover { text-decoration: underline; }
+
+    /* ── States toggle (prototype controls) ── */
+    .proto-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 40px;
+      padding: 8px 16px;
+    }
+
+    .proto-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #aaa;
+      transition: all 0.15s;
+    }
+    .proto-btn.active, .proto-btn:hover {
+      background: #e8f56e;
+      color: #0a0f2e;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      display: none;
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .error-banner.hidden { display: none !important; }
+    .error-banner svg { flex-shrink: 0; }
+    .error-banner span {
+      font-size: 11px;
+      color: #f87171;
+    }
+
+    /* ── Loading spinner inside button ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(10,15,46,0.3);
+      border-top-color: #0a0f2e;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* ── Input error state ── */
+    input.error-state {
+      border-color: #f87171;
+      box-shadow: 0 0 0 1px #f87171;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Phone shell -->
+<div class="phone">
+  <div class="screen">
+    <div class="card-wrap">
+      <div class="card">
+
+        <!-- Logo -->
+        <div class="logo-box">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="2" y="5" width="18" height="13" rx="2" stroke="#e8f56e" stroke-width="1.5"/>
+            <path d="M6 9h10M6 12.5h6" stroke="#e8f56e" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <p class="title">Welcome back</p>
+        <p class="subtitle">Sign in to continue to your account</p>
+
+        <!-- Error banner (shown in "error" prototype state) -->
+        <div class="error-banner hidden" id="errorBanner">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#f87171" stroke-width="1.4"/>
+            <path d="M8 5v4M8 11v.5" stroke="#f87171" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span>Invalid username or password.</span>
+        </div>
+
+        <!-- Username -->
+        <div class="field">
+          <label class="field-label">Username</label>
+          <input type="text" id="usernameInput" placeholder="your_username" />
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <div class="pw-label-row">
+            <span class="field-label" style="margin-bottom:0">Password</span>
+            <a class="forgot-link">Forgot password?</a>
+          </div>
+          <input type="password" id="passwordInput" placeholder="••••••••" />
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-primary" id="signInBtn" onclick="handleSignIn()">Sign in</button>
+
+        <!-- Footer -->
+        <p class="footer-link">
+          Don't have an account?&nbsp;&nbsp;<a href="#">Create one</a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Prototype state controls -->
+<div class="proto-bar">
+  <button class="proto-btn active" onclick="setState('default', this)">Default</button>
+  <button class="proto-btn" onclick="setState('filled', this)">Filled</button>
+  <button class="proto-btn" onclick="setState('loading', this)">Loading</button>
+  <button class="proto-btn" onclick="setState('error', this)">Error</button>
+</div>
+
+<script>
+  const states = {
+    default: () => {
+      document.getElementById('usernameInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('usernameInput').classList.remove('error-state');
+      document.getElementById('passwordInput').classList.remove('error-state');
+      document.getElementById('errorBanner').classList.add('hidden');
+      const btn = document.getElementById('signInBtn');
+      btn.innerHTML = 'Sign in';
+      btn.disabled = false;
+    },
+    filled: () => {
+      document.getElementById('usernameInput').value = 'stormUser';
+      document.getElementById('passwordInput').value = 'hunter2';
+      document.getElementById('usernameInput').classList.remove('error-state');
+      document.getElementById('passwordInput').classList.remove('error-state');
+      document.getElementById('errorBanner').classList.add('hidden');
+      const btn = document.getElementById('signInBtn');
+      btn.innerHTML = 'Sign in';
+      btn.disabled = false;
+    },
+    loading: () => {
+      document.getElementById('usernameInput').value = 'stormUser';
+      document.getElementById('passwordInput').value = 'hunter2';
+      document.getElementById('usernameInput').classList.remove('error-state');
+      document.getElementById('passwordInput').classList.remove('error-state');
+      document.getElementById('errorBanner').classList.add('hidden');
+      const btn = document.getElementById('signInBtn');
+      btn.innerHTML = '<span class="spinner"></span>';
+      btn.disabled = true;
+    },
+    error: () => {
+      document.getElementById('usernameInput').value = 'stormUser';
+      document.getElementById('passwordInput').value = 'wrongpass';
+      document.getElementById('usernameInput').classList.add('error-state');
+      document.getElementById('passwordInput').classList.add('error-state');
+      document.getElementById('errorBanner').classList.remove('hidden');
+      const btn = document.getElementById('signInBtn');
+      btn.innerHTML = 'Sign in';
+      btn.disabled = false;
+    },
+  };
+
+  function setState(name, el) {
+    document.querySelectorAll('.proto-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    states[name]();
+  }
+
+  function handleSignIn() {
+    const btn = document.getElementById('signInBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+    // Simulate a brief load then snap back (demo only)
+    setTimeout(() => {
+      btn.innerHTML = 'Sign in';
+      btn.disabled = false;
+    }, 1800);
+  }
+</script>
+
+</body>
+</html>

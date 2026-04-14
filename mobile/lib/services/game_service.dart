@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String _baseUrl = 'https://gnorg.net/api';
+const String _baseOrigin = 'https://gnorg.net';
 
 // ── Models ─────────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ class Game {
     required this.id,
     required this.name,
     this.players,
-    required this.genre,
+    this.genre = const Genre(),
     this.portable,
     this.coverImage,
   });
@@ -83,6 +84,51 @@ class Game {
     }
     return parts.join(' · ');
   }
+
+  /// Short display string: "3-6 players · Strategy" (no exact counts, no type, no "not portable").
+  String get subtitle {
+    final parts = <String>[];
+    if (players != null) {
+      if (players!.min != null && players!.max != null) {
+        parts.add('${players!.min}-${players!.max} players');
+      } else if (players!.min != null) {
+        parts.add('${players!.min}+ players');
+      } else if (players!.max != null) {
+        parts.add('up to ${players!.max} players');
+      }
+    }
+    if (genre.category != null && genre.category!.isNotEmpty) {
+      parts.add(genre.category!);
+    }
+    if (portable == true) parts.add('portable');
+    return parts.join(' · ');
+  }
+
+  /// Full plain-text representation suitable for clipboard copy.
+  String get copyText {
+    final parts = <String>[];
+    if (players != null) {
+      if (players!.exact != null && players!.exact!.isNotEmpty) {
+        parts.add('${players!.exact!.join(', ')} players');
+      } else if (players!.min != null && players!.max != null) {
+        parts.add('${players!.min}-${players!.max} players');
+      } else if (players!.min != null) {
+        parts.add('${players!.min}+ players');
+      } else if (players!.max != null) {
+        parts.add('up to ${players!.max} players');
+      }
+    }
+    if (genre.category != null && genre.category!.isNotEmpty) {
+      if (genre.type != null && genre.type!.isNotEmpty) {
+        parts.add('${genre.category} / ${genre.type}');
+      } else {
+        parts.add(genre.category!);
+      }
+    }
+    if (portable != null) parts.add(portable! ? 'portable' : 'not portable');
+    if (parts.isEmpty) return name;
+    return '$name \u2014 ${parts.join(', ')}';
+  }
 }
 
 // ── Service ────────────────────────────────────────────────────────────────────
@@ -111,11 +157,13 @@ class GameService {
   }
 
   /// Returns list of games or throws [UnauthorizedException] / [Exception].
+  /// Pass [httpClient] to inject a mock client in tests.
   static Future<List<Game>> getGames({
     String? name,
     int? playerCount,
     String? genreCategory,
     bool? portable,
+    http.Client? httpClient,
   }) async {
     final headers = await _authHeaders();
     final body = <String, dynamic>{};
@@ -126,13 +174,23 @@ class GameService {
     }
     if (portable != null) body['portable'] = portable;
 
-    final res = await http.post(
-      Uri.parse('$_baseUrl/games/get'),
-      headers: headers,
-      body: utf8.encode(jsonEncode(body)),
-    );
+    final res = httpClient != null
+        ? await httpClient.post(
+            Uri.parse('$_baseUrl/games/get'),
+            headers: headers,
+            body: utf8.encode(jsonEncode(body)),
+          )
+        : await http.post(
+            Uri.parse('$_baseUrl/games/get'),
+            headers: headers,
+            body: utf8.encode(jsonEncode(body)),
+          );
     await _handleRefresh(res);
-    if (res.statusCode == 401) throw UnauthorizedException();
+    if (res.statusCode == 401) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      throw UnauthorizedException();
+    }
     if (res.statusCode == 404) return [];
     if (res.statusCode != 200) throw Exception('Fetch failed');
     final list = jsonDecode(res.body) as List<dynamic>;
@@ -218,7 +276,7 @@ class GameService {
         onError('Session expired.');
         return null;
       }
-      if (res.statusCode != 200) {
+      if (res.statusCode != 200 && res.statusCode != 201) {
         try {
           final body = jsonDecode(res.body) as Map<String, dynamic>;
           onError(body['error'] == 'FILE_TOO_LARGE'
@@ -230,7 +288,8 @@ class GameService {
         return null;
       }
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      return body['url'] as String?;
+      final rawUrl = body['url'] as String?;
+      return rawUrl != null ? '$_baseOrigin$rawUrl' : null;
     } catch (e) {
       debugPrint('[uploadImage] $e');
       onError('Network error during upload.');
